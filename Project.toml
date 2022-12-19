@@ -1,0 +1,9 @@
+name = "Muscle"
+uuid = "21fe5c4b-a943-414d-bf3e-516f24900631"
+authors = ["Sergio Sánchez Ramírez <sergio.sanchez.ramirez@bsc.es> and contributors"]
+version = "0.1.0"
+
+
+[compat]
+julia = "1.6"
+
