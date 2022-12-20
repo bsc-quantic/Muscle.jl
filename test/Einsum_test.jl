@@ -1,4 +1,5 @@
 using Muscle: parse, OuterProduct, InnerProduct, Trace, Permutation
+import Permutations: Permutation as Permutator
 
 @testset "Einsum - Parsing - InnerProduct" begin
     @test parse(InnerProduct, [:m, :n], [:m, :k], [:k, :n]) == [:k]
@@ -21,6 +22,6 @@ end
 end
 
 @testset "Einsum - Parsing - Permutation" begin
-    @test parse(Permutation, [:a, :b], [:a, :b]) == ...
-    @test parse(Permutation, [:b, :a], [:a, :b]) == ...
+    @test parse(Permutation, [:a, :b], [:a, :b]) == Permutator([1, 2])
+    @test parse(Permutation, [:b, :a], [:a, :b]) == Permutator([2, 1])
 end
