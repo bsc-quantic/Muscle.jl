@@ -14,7 +14,7 @@ abstract type Permutation <: EinsumOperation end
 
 parse(::Type{OuterProduct}, output, inputs...) = symdiff(inputs...) ∩ output
 parse(::Type{InnerProduct}, output, inputs...) = setdiff(∩(inputs...), output)
-parse(::Type{Trace}, output, input) = (xs = sort(input); Set(a for (a, b) ∈ zip(xs, xs[2:end]) if a == b))
+parse(::Type{Trace}, output, input) = (xs = sort(input); [a for (a, b) ∈ zip(xs, xs[2:end]) if a == b])
 parse(::Type{Permutation}, output, input) = Permutations.Permutation([findfirst(output .== ind) for ind in input])
 
 function parse(output, inputs...)
