@@ -8,7 +8,7 @@ Swaps the content of two `StridedArray`s or `SubArray`s.
 function swap! end
 
 """
-    naiveswap!(A,B) where {N}
+    naiveswap!(A,B)
 
 Naïve implementation of [`swap!`](@ref).
 """
