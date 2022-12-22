@@ -1,4 +1,5 @@
 using StaticArrays: MVector
+using SIMD: VecRange
 
 """
 	swap!(A, B)
@@ -27,3 +28,19 @@ function swap!(A::Ptr{T}, B::Ptr{T}, buffer::MVector{N,T}) where {T,N}
     unsafe_copyto!(B, buffer, N)
 end
 
+"""
+    vswap!(A,B)
+
+Vectorized implementation of [`swap!`](@ref).
+"""
+function vswap!(A, B) end
+
+# NOTE `N` must be a power of 2
+function vswap!(A::AbstractVector{T}, B::AbstractVector{T}, ::Val{N}) where {T,N}
+    @inbounds for i in 1:N:length(A)
+        idx = VecRange{N}(i)
+        tmp = A[idx]
+        A[idx] = B[idx]
+        B[idx] = tmp
+    end
+end
