@@ -1,7 +1,7 @@
 using Muscle.Kernel: swap!, naiveswap!
 
 @testset "Kernel" verbose = true begin
-    @testset "swap!" verbose = true begin
+    @testset "swap methods" verbose = true begin
         @testset "naiveswap!" begin
             @test begin
                 A, B = Int[], Int[]

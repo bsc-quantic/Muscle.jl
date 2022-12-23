@@ -1,5 +1,4 @@
 using Muscle
 using Test
 
-include("Einsum_test.jl")
-include("Kernel/swap_test.jl")
+include("swap_test.jl")
