@@ -2,8 +2,8 @@ using Muscle: mapswap!, Naive, Vectorized
 
 @testset "Kernels" verbose = true begin
     @testset "mapswap!" verbose = true begin
-        for impl in [Naive, Vectorized]
-            @testset "$impl implementation" begin
+        @testset "$impl impl." verbose = true for impl in [Naive, Vectorized]
+            @testset "f=$f" for f in [identity, Base.Fix1(+, 1)]
                 @test begin
                     A, B = Int[], Int[]
                     mapswap!(impl, A, B)
