@@ -1,3 +1,9 @@
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
+
+push!(LOAD_PATH, "$(@__DIR__)/..")
+
 using Muscle
 using Documenter
 
