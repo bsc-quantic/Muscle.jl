@@ -1,7 +1,7 @@
 using LinearAlgebra
 
 """
-    gramschmidt!(A[, p; atol])
+    gramschmidt!(A)
 
 Creates an orthogonal basis from a random matrix `A` using the numerically-stable Gram-Schmidt process.
 """
