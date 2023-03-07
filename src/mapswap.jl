@@ -6,6 +6,7 @@ Swaps the content of two `StridedArray`s or `SubArray`s and applies the `f`,`g` 
 map!(f, A)
 map!(g, B)
 swap!(A, B)
+```
 """
 function mapswap! end
 
