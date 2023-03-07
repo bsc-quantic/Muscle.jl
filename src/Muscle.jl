@@ -7,7 +7,7 @@ abstract type Vectorized <: Implementation end
 include("mapswap.jl")
 export mapswap!
 
-include("Numerics.jl")
+include("Numerics/gramschmidt.jl")
 export gramschmidt!
 
 end
