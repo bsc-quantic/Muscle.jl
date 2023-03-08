@@ -10,7 +10,7 @@ swap!(A, B)
 """
 function mapswap! end
 
-mapswap(A::AbstractArray, B::AbstractArray, f=identity, g=identity) = mapswap!(Naive, A, B, f=f, g=g)
+mapswap!(A::AbstractArray, B::AbstractArray, f=identity, g=identity) = mapswap!(Naive, A, B, f, g)
 
 function mapswap!(::Type{Naive}, A::AbstractArray{T}, B::AbstractArray{T}, f=identity, g=identity) where {T}
     @inbounds for i in eachindex(A, B)
