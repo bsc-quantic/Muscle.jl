@@ -9,4 +9,5 @@ Permutations = "2ae35dd2-176d-5d53-8349-f30d82d94d4f"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
+Permutations = "0.4"
 julia = "1.6"
