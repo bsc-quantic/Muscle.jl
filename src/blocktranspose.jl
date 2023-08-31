@@ -9,54 +9,49 @@ using StaticArrays
 """
 function blocktranspose! end
 
-function blocktranspose!(A)
-    @simd ivdep for I in eachindex(IndexCartesian(), A)
-        (i, j) = Tuple(I)
-        if i > j # TODO vector mask?
-            @inbounds (A[i, j], A[j, i]) = (A[j, i], A[i, j])
+function __blocktranspose_block_fetch!(A, B)
+    @simd for i in eachindex(A, B)
+        @inbounds B[i] = A[i]
+    end
+end
+
+@generated function __blocktranspose_block_transpose!(B::MMatrix{N,N}) where {N}
+    swaps = map(Iterators.filter(splat(>), Iterators.map(Tuple, Iterators.product(1:N, 1:N)))) do (i, j)
+        quote
+            B[$i, $j], B[$j, $i] = B[$j, $i], B[$i, $j]
+        end
+    end
+
+    quote
+        @inbounds begin
+            $(swaps...)
         end
     end
 end
 
-# NOTE Apple M1: optimal performance for Float64 at N=16
+# NOTE Apple M1: optimal performance for Float64 at N=16, Float32 at N=32
 function blocktranspose!(::Val{N}, A::AbstractMatrix{T}) where {N,T}
-    bottom = MMatrix{N,N,T}(undef)
-    top = MMatrix{N,N,T}(undef)
+    Bₗ = MMatrix{N,N,T}(undef)
+    Bᵣ = MMatrix{N,N,T}(undef)
 
-    for bj in 1:N:size(A, 1)
-        for bi in 1:N:size(A, 2)
-            bi > bj && break
+    for bⱼ in 1:N:size(A, 2)
+        for bᵢ in 1:N:size(A, 1)
+            bᵢ > bⱼ && break
+
+            @inbounds Aₗ = @view A[bᵢ:bᵢ+N-1, bⱼ:bⱼ+N-1]
+            @inbounds Aᵣ = @view A[bⱼ:bⱼ+N-1, bᵢ:bᵢ+N-1]
 
             # fetch blocks
-            for I in eachindex(IndexCartesian(), bottom, top)
-                i, j = Tuple(I)
-                @inbounds bottom[i, j] = A[bi+i-1, bj+j-1]
-                @inbounds top[i, j] = A[bj+i-1, bi+j-1]
-            end
+            __blocktranspose_block_fetch!(Aₗ, Bₗ)
+            __blocktranspose_block_fetch!(Aᵣ, Bᵣ)
 
-            # transpose blocks
-            for I in eachindex(IndexCartesian(), bottom, top)
-                i, j = Tuple(I)
-                i > j && continue
-                @inbounds bottom[i, j], bottom[j, i] = bottom[j, i], bottom[i, j]
-                @inbounds top[i, j], top[j, i] = top[j, i], top[i, j]
-            end
+            # swap & transpose blocks
+            __blocktranspose_block_transpose!(Bₗ)
+            __blocktranspose_block_transpose!(Bᵣ)
 
-            # swap blocks
-            for I in eachindex(IndexCartesian(), bottom, top)
-                i, j = Tuple(I)
-                @inbounds A[bi+i-1, bj+j-1] = top[i, j]
-                @inbounds A[bj+i-1, bi+j-1] = bottom[i, j]
-            end
-        end
-    end
-end
-
-# TODO conj to complex
-function blocktranspose!(A, B)
-    for (colB, rowA) in zip(eachcol(B), eachrow(A))
-        @simd for i in eachindex(colB, rowA)
-            @inbounds colB[i] = rowA[i]
+            # write blocks
+            __blocktranspose_block_fetch!(Bᵣ, Aₗ)
+            __blocktranspose_block_fetch!(Bₗ, Aᵣ)
         end
     end
 end
