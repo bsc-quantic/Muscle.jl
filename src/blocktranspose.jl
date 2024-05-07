@@ -15,6 +15,7 @@ function __blocktranspose_block_fetch!(A, B)
     end
 end
 
+# NOTE `@generated` is used for manual loop unrolling
 @generated function __blocktranspose_block_transpose!(B::MMatrix{N,N}) where {N}
     swaps = map(Iterators.filter(splat(>), Iterators.map(Tuple, Iterators.product(1:N, 1:N)))) do (i, j)
         quote
