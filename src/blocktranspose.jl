@@ -50,7 +50,7 @@ function blocktranspose!(::Val{N}, A::AbstractMatrix{T}) where {N,T}
             __blocktranspose_block_transpose!(Bₗ)
             __blocktranspose_block_transpose!(Bᵣ)
 
-            # write blocks
+            # write blocks swap
             __blocktranspose_block_fetch!(Bᵣ, Aₗ)
             __blocktranspose_block_fetch!(Bₗ, Aᵣ)
         end
