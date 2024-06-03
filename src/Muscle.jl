@@ -13,8 +13,7 @@ export blocktranspose!
 include("Numerics/gramschmidt.jl")
 export gramschmidt!
 
-include("Einsum/Einsum.jl")
-import .Einsum: @einengine_str, einsum, einsum!
-export @einengine_str, einsum, einsum!
+include("Einsum.jl")
+export einsum, einsum!
 
 end
