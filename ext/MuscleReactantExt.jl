@@ -3,8 +3,10 @@ module MuscleReactantExt
 using Muscle
 using Reactant
 const MLIR = Reactant.MLIR
+const stablehlo = MLIR.Dialects.stablehlo
+const Cassette = Reactant.Cassette
 
-function einsum(ic, @nospecialize(a::TracedRArray{Ta,Sa,Na}), ia, @nospecialize(b::TracedRArray{Tb,Sb,Nb}), ib) where {Ta,Sa,Na,Tb,Sb,Nb}
+function Muscle.einsum(ic, @nospecialize(a::TracedRArray{Ta,Sa,Na}), ia, @nospecialize(b::TracedRArray{Tb,Sb,Nb}), ib) where {Ta,Sa,Na,Tb,Sb,Nb}
     T = promote_type(Ta, Tb)
     mlirty = MLIR.IR.Type(T)
 
@@ -17,7 +19,7 @@ function einsum(ic, @nospecialize(a::TracedRArray{Ta,Sa,Na}), ia, @nospecialize(
     return Reactant.TracedRArray{T,rsize,length(ic)}((), result)
 end
 
-function einsum(ic, @nospecialize(a::TracedRArray{T,S,N}), ia) where {T,S,N}
+function Muscle.einsum(ic, @nospecialize(a::TracedRArray{T,S,N}), ia) where {T,S,N}
     mlirty = MLIR.IR.Type(T)
 
     rsize = Tuple(size(a, findfirst(==(i), ia)) for i in ic)
@@ -28,5 +30,7 @@ function einsum(ic, @nospecialize(a::TracedRArray{T,S,N}), ia) where {T,S,N}
 
     return Reactant.TracedRArray{T,rsize,length(ic)}((), result)
 end
+
+Cassette.overdub(ctx::Reactant.TraceCtx, f::typeof(Muscle.einsum), args...; kwargs...) = f(args...; kwargs...)
 
 end
