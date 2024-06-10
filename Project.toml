@@ -11,9 +11,11 @@ OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [weakdeps]
+Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
 Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 
 [extensions]
+MuscleDaggerExt = "Dagger"
 MuscleReactantExt = "Reactant"
 
 [compat]
