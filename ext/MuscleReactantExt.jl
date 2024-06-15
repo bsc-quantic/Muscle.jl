@@ -14,6 +14,7 @@ function Muscle.einsum(ic, @nospecialize(a::TracedRArray{Ta,Sa,Na}), ia, @nospec
     result_0 = MLIR.IR.TensorType(rsize, mlirty)
     einsum_config = MLIR.IR.Attribute("$(join(ia)),$(join(ib))->$(join(ic))")
 
+    # TODO replace with `dot_general` + `transpose`
     result = MLIR.IR.result(stablehlo.einsum(a.mlir_data, b.mlir_data; result_0, einsum_config))
 
     return Reactant.TracedRArray{T,rsize,length(ic)}((), result)
@@ -26,6 +27,7 @@ function Muscle.einsum(ic, @nospecialize(a::TracedRArray{T,S,N}), ia) where {T,S
     result_0 = MLIR.IR.TensorType(rsize, mlirty)
     einsum_config = MLIR.IR.Attribute("$(join(ia))->$(join(ic))")
 
+    # TODO replace with `reduce`
     result = MLIR.IR.result(stablehlo.unary_einsum(a.mlir_data; result_0, einsum_config))
 
     return Reactant.TracedRArray{T,rsize,length(ic)}((), result)
