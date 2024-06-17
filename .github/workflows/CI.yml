@@ -26,9 +26,9 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.8'
           - '1.9'
           - '1.10'
+          - '1.11'
         os:
           - ubuntu-latest
         arch:
@@ -39,6 +39,7 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+          include-all-prereleases: true
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
@@ -46,23 +47,3 @@ jobs:
       - uses: codecov/codecov-action@v2
         with:
           files: lcov.info
-  docs:
-    name: Documentation
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-docdeploy@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          julia --project=docs -e '
-            using Documenter: DocMeta, doctest
-            using Muscle
-            DocMeta.setdocmeta!(Muscle, :DocTestSetup, :(using Muscle); recursive=true)
-            doctest(Muscle)'

@@ -21,4 +21,4 @@ MuscleReactantExt = "Reactant"
 [compat]
 Reactant = "0.1"
 StaticArrays = "1"
-julia = "1.8"
+julia = "1.9"
