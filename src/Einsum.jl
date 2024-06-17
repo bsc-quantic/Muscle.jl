@@ -2,22 +2,29 @@ using LinearAlgebra
 using OMEinsum: OMEinsum
 
 function einsum(einstr::String, a, b)
-    m = match(r"(?<a>\w+),(<b>\w+)->(<c>\w+)", einstr)
-    return einsum(collect(m[:c]), a, collect(m[:a]), b, collect(m[:b]))
+    m = match(r"(?<a>\w*),(?<b>\w*)->(?<c>\w*)", einstr)
+    ia = isnothing(m[:a]) ? Char[] : collect(m[:a])
+    ib = isnothing(m[:b]) ? Char[] : collect(m[:b])
+    ic = isnothing(m[:c]) ? Char[] : collect(m[:c])
+    return einsum(ic, a, ia, b, ib)
 end
 
 function einsum(einstr::String, a)
-    m = match(r"(?<a>\w+)->(?<c>\w+)", einstr)
-    return einsum(collect(m[:c]), a, collect(m[:a]))
+    m = match(r"(?<a>\w*)->(?<c>\w*)", einstr)
+    ia = collect(m[:a])
+    ic = isnothing(m[:c]) ? Char[] : collect(m[:c])
+    return einsum(ic, a, ia)
 end
 
 function einsum(ic, a, ia, b, ib)
-    c = OMEinsum.get_output_array((a, b), [...]; fillzero=false)
+    size_dict = [size(i in ia ? a : b, findfirst(==(i), i in ia ? ia : ib)) for i in ic]
+    c = OMEinsum.get_output_array((a, b), size_dict; fillzero=false)
     return einsum!(c, ic, a, ia, b, ib)
 end
 
 function einsum(ic, a, ia)
-    c = OMEinsum.get_output_array((a, b), [...]; fillzero=false)
+    size_dict = [size(a, findfirst(==(i), ia)) for i in ic]
+    c = OMEinsum.get_output_array((a,), size_dict; fillzero=false)
     return einsum!(c, ic, a, ia)
 end
 
