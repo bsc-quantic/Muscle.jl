@@ -33,7 +33,7 @@ function einsum!(c, ic, a, ia, b, ib)
     iy = ic
     xs = (a, b)
     y = c
-    size_dict = Dict([(ia .=> size(a))..., (ib .=> size(b))...])
+    size_dict = Dict{Char,Int}([(ia .=> size(a))..., (ib .=> size(b))...])
 
     OMEinsum.einsum!(ixs, iy, xs, y, true, false, size_dict)
 
