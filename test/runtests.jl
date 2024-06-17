@@ -6,5 +6,9 @@ using Test
     include("Einsum_test.jl")
 end
 
+@testset "Integration" verbose = true begin
+    include("integration/Dagger_test.jl")
+end
+
 using Aqua
 Aqua.test_all(Muscle)

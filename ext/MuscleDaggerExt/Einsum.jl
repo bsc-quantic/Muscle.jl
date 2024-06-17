@@ -3,11 +3,11 @@ using Dagger: Dagger, ArrayOp, Context, ArrayDomain, EagerThunk, DArray
 using LinearAlgebra
 
 struct Einsum{T,N} <: ArrayOp{T,N}
-    ic::Vector{Symbol}
+    ic::Vector{Char}
     a::ArrayOp
-    ia::Vector{Symbol}
+    ia::Vector{Char}
     b::ArrayOp
-    ib::Vector{Symbol}
+    ib::Vector{Char}
 
     function Einsum(ic, a, ia, b, ib)
         allunique(ia) || throw(ErrorException("ia must have unique indices"))
