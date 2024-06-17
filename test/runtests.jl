@@ -7,6 +7,7 @@ using Test
 end
 
 @testset "Integration" verbose = true begin
+    include("integration/ChainRules_test.jl")
     include("integration/Dagger_test.jl")
 end
 
