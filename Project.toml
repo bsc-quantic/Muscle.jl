@@ -20,6 +20,7 @@ MuscleReactantExt = "Reactant"
 
 [compat]
 ChainRulesCore = "1.0"
+Dagger = "0.18"
 LinearAlgebra = "1.9"
 OMEinsum = "0.8"
 Reactant = "0.1"
