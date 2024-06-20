@@ -6,7 +6,7 @@ const MLIR = Reactant.MLIR
 const stablehlo = MLIR.Dialects.stablehlo
 const Cassette = Reactant.Cassette
 
-function Muscle.einsum(ic, @nospecialize(a::TracedRArray{Ta,Sa,Na}), ia, @nospecialize(b::TracedRArray{Tb,Sb,Nb}), ib) where {Ta,Sa,Na,Tb,Sb,Nb}
+function Muscle.einsum(ic, @nospecialize(a::Reactant.TracedRArray{Ta,Sa,Na}), ia, @nospecialize(b::Reactant.TracedRArray{Tb,Sb,Nb}), ib) where {Ta,Sa,Na,Tb,Sb,Nb}
     T = promote_type(Ta, Tb)
     mlirty = MLIR.IR.Type(T)
 
@@ -20,7 +20,7 @@ function Muscle.einsum(ic, @nospecialize(a::TracedRArray{Ta,Sa,Na}), ia, @nospec
     return Reactant.TracedRArray{T,rsize,length(ic)}((), result)
 end
 
-function Muscle.einsum(ic, @nospecialize(a::TracedRArray{T,S,N}), ia) where {T,S,N}
+function Muscle.einsum(ic, @nospecialize(a::Reactant.TracedRArray{T,S,N}), ia) where {T,S,N}
     mlirty = MLIR.IR.Type(T)
 
     rsize = Tuple(size(a, findfirst(==(i), ia)) for i in ic)
