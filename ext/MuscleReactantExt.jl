@@ -4,7 +4,6 @@ using Muscle
 using Reactant
 const MLIR = Reactant.MLIR
 const stablehlo = MLIR.Dialects.stablehlo
-const Cassette = Reactant.Cassette
 
 function Muscle.einsum(ic, @nospecialize(a::Reactant.TracedRArray{Ta,Sa,Na}), ia, @nospecialize(b::Reactant.TracedRArray{Tb,Sb,Nb}), ib) where {Ta,Sa,Na,Tb,Sb,Nb}
     T = promote_type(Ta, Tb)
@@ -32,7 +31,5 @@ function Muscle.einsum(ic, @nospecialize(a::Reactant.TracedRArray{T,S,N}), ia) w
 
     return Reactant.TracedRArray{T,rsize,length(ic)}((), result)
 end
-
-Cassette.overdub(ctx::Reactant.TraceCtx, f::typeof(Muscle.einsum), args...; kwargs...) = f(args...; kwargs...)
 
 end
