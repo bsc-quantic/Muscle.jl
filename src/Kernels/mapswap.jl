@@ -1,3 +1,7 @@
+abstract type Implementation end
+abstract type Naive <: Implementation end
+abstract type Vectorized <: Implementation end
+
 """
 	mapswap!([], A, B, f, g)
 
