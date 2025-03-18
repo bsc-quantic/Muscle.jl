@@ -52,6 +52,12 @@ Constructs a [`Site`](@ref) object with the given coordinates. The coordinates a
 """
 macro site_str(str)
     expr = Meta.parse(str)
+
+    # shortcut for 1-dim sites (e.g. `site"1"`)
+    if expr isa Int
+        return :(Site($expr))
+    end
+
     @assert Meta.isexpr(expr, :tuple) "Invalid site string"
     return :(Site($(expr.args...)))
 end
@@ -63,6 +69,8 @@ struct Bond{N} <: Index
 
     Bond{N}(src::Site{N}, dst::Site{N}) where {N} = new{N}(minmax(src, dst)...)
 end
+
+Bond(src::Site{N}, dst::Site{N}) where {N} = Bond{N}(src, dst)
 
 Base.copy(x::Bond) = x
 
@@ -107,6 +115,14 @@ Base.isdone(::Bond, state) = state == 2
 hassite(bond::Bond, site::Site) = site == bond.src || site == bond.dst
 sites(bond::Bond) = (bond.src, bond.dst)
 
+macro bond_str(str)
+    m = match(r"([\w,]+)[-]([\w,]+)", "1-1")
+    @assert length(m.captures) == 2
+    src = m.captures[1]
+    dst = m.captures[2]
+    return :(Bond(@site_str($src), @site_str($dst)))
+end
+
 # Plug interface
 """
     Plug(id[; dual = false])
@@ -149,8 +165,8 @@ See also: [`@site_str`](@ref)
 """
 macro plug_str(str)
     isdual = endswith(str, '\'')
-    str = chopsuffix(str, '\'')
-    return :(Plug(site"$str"; isdual=$isdual))
+    str = chopsuffix(str, "'")
+    return @show :(Plug(@site_str($str); isdual=$isdual))
 end
 
 # Moment interface
