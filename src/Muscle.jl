@@ -2,6 +2,8 @@ module Muscle
 
 using Compat: @compat
 
+include("Utils/Utils.jl")
+
 include("Index.jl")
 export NamedIndex
 export Site, issite, site, @site_str
