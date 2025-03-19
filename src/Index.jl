@@ -11,11 +11,13 @@ NamedIndex(name::String) = NamedIndex(Symbol(name))
 
 Base.copy(x::NamedIndex) = x
 
+isindex(::NamedIndex) = true
+
 # Site interface
 """
     Site(id)
     Site(i, j, ...)
-    lane"i,j,..."
+    site"i,j,..."
 
 Represents the location of a physical index.
 
@@ -74,6 +76,8 @@ Bond(src::Site{N}, dst::Site{N}) where {N} = Bond{N}(src, dst)
 
 Base.copy(x::Bond) = x
 
+isindex(::Bond) = true
+
 isbond(::Bond) = true
 isbond(::Index) = false
 
@@ -116,7 +120,7 @@ hassite(bond::Bond, site::Site) = site == bond.src || site == bond.dst
 sites(bond::Bond) = (bond.src, bond.dst)
 
 macro bond_str(str)
-    m = match(r"([\w,]+)[-]([\w,]+)", "1-1")
+    m = match(r"([\w,]+)[-]([\w,]+)", str)
     @assert length(m.captures) == 2
     src = m.captures[1]
     dst = m.captures[2]
@@ -138,6 +142,7 @@ Base.@kwdef struct Plug{N} <: Index
     isdual::Bool = false
 end
 
+Plug(site::Site{N}; kwargs...) where {N} = Plug{N}(; site, kwargs...)
 Plug(id::Int; kwargs...) = Plug(Site(id); kwargs...)
 Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = Plug(Site(id); kwargs...)
 Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = Plug(Site(id); kwargs...)
@@ -145,16 +150,21 @@ Plug(@nospecialize(id::CartesianIndex); kwargs...) = Plug(Site(id); kwargs...)
 
 Base.copy(x::Plug) = x
 
+isindex(::Plug) = true
+issite(::Plug) = true
+
 isplug(::Plug) = true
 isplug(::Index) = false
 
 isdual(x::Plug) = x.isdual
 isdual(x::Index) = isdual(plug(x))
 
+site(x::Plug) = x.site
 plug(x::Plug) = x
-Base.adjoint(x::Plug) = Plug(lane(x); isdual=!isdual(x))
 
-Base.show(io::IO, x::Plug) = print(io, "$(lane(x))$(isdual(x) ? "'" : "")")
+Base.adjoint(x::Plug) = Plug(site(x); isdual=!isdual(x))
+
+Base.show(io::IO, x::Plug) = print(io, "$(site(x))$(isdual(x) ? "'" : "")")
 
 """
     plug"i,j,...[']"
@@ -166,7 +176,7 @@ See also: [`@site_str`](@ref)
 macro plug_str(str)
     isdual = endswith(str, '\'')
     str = chopsuffix(str, "'")
-    return @show :(Plug(@site_str($str); isdual=$isdual))
+    return :(Plug(@site_str($str); isdual=$isdual))
 end
 
 # Moment interface
@@ -179,6 +189,7 @@ end
 
 Base.copy(x::Moment) = Moment(copy(x), x.t)
 
+isindex(::Moment) = true
 issite(x::Moment) = issite(x.index)
 isbond(x::Moment) = isbond(x.index)
 isdual(x::Moment) = isdual(x.index)
@@ -187,3 +198,20 @@ site(x::Moment) = site(x.index)
 bond(x::Moment) = bond(x.index)
 
 Base.show(io::IO, x::Moment) = print(io, "$(x.index) @ t=$(x.t)")
+
+# index management
+function findperm(from, to)
+    @assert issetequal(from, to)
+
+    # if there are hyperindices, we remove one by one
+    inds_to = collect(Union{Missing,Symbol}, to)
+
+    return map(from) do ind
+        i = findfirst(isequal(ind), inds_to)
+
+        # mark element as used
+        inds_to[i] = missing
+
+        i
+    end
+end
