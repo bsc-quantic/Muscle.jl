@@ -4,6 +4,7 @@ authors = ["Sergio Sánchez Ramírez <sergio.sanchez.ramirez@bsc.es> and contrib
 version = "0.2.2"
 
 [deps]
+EinExprs = "b1794770-133b-4de1-afb4-526377e9f4c5"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
