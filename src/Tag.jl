@@ -59,7 +59,7 @@ struct Bond{A,B} <: Tag
     Bond{A,B}(src::A, dst::B) where {A,B} = new{A,B}(minmax(src, dst)...)
 end
 
-Bond(src::Site{N}, dst::Site{N}) where {N} = Bond{N}(src, dst)
+Bond(src::Src, dst::Dst) where {Src,Dst} = Bond{Src,Dst}(src, dst)
 
 """
     bond"i,j,...-k,l,..."
