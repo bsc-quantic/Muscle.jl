@@ -18,6 +18,8 @@ export Index
 include("Tensor.jl")
 export Tensor
 
+include("Architecture.jl")
+
 # rexports from EinExprs
 export inds
 
