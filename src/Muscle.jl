@@ -5,11 +5,13 @@ using Compat: @compat
 
 include("Utils/Utils.jl")
 
-include("Index.jl")
-export NamedIndex
+include("Tag.jl")
 export Site, issite, site, @site_str
 export Bond, isbond, bond, @bond_str
 export Plug, isplug, plug, isdual, @plug_str
+
+include("Index.jl")
+export Index
 
 @compat public Moment
 
