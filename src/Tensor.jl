@@ -40,6 +40,12 @@ Tensor(data::A, inds::NTuple{N}) where {T,N,A<:AbstractArray{T,N}} = Tensor{T,N,
 Tensor(data::AbstractArray{T,0}) where {T} = Tensor(data, Index[])
 Tensor(data::Number) = Tensor(fill(data))
 
+# useful methods
+Tensor(data::AbstractArray, inds::Vector{Symbol}) = Tensor(data, map(Index, inds))
+function Tensor{T,N,A}(data::A, inds::Vector{Symbol}) where {T,N,A<:AbstractArray{T,N}}
+    Tensor(data, ImmutableVector(map(Index, inds)))
+end
+
 inds(x::Tensor) = x.inds
 
 Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
