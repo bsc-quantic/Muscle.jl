@@ -11,7 +11,7 @@ struct Tensor{T,N,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
     data::A
     inds::ImmutableVector{Index}
 
-    function Tensor(data::A, inds::ImmutableVector{Index}) where {T,N,A<:AbstractArray{T,N}}
+    function Tensor(data::A, inds::ImmutableVector{I}) where {T,N,A<:AbstractArray{T,N},I<:Index}
         if length(inds) != N
             throw(ArgumentError("ndims(data) [$(ndims(data))] must be equal to length(inds) [$(length(inds))]"))
         end
@@ -23,7 +23,7 @@ struct Tensor{T,N,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
         return new{T,N,A}(data, inds)
     end
 
-    function Tensor(data::A, inds::AbstractVector{Index}) where {T,N,A<:AbstractArray{T,N}}
+    function Tensor(data::A, inds::AbstractVector{I}) where {T,N,A<:AbstractArray{T,N},I<:Index}
         return Tensor(data, ImmutableVector(inds))
     end
 end
@@ -36,7 +36,7 @@ end
 
 Construct a tensor with the given data and indices.
 """
-Tensor(data::A, inds::NTuple{N,Index}) where {T,N,A<:AbstractArray{T,N}} = Tensor{T,N,A}(data, collect(inds))
+Tensor(data::A, inds::NTuple{N}) where {T,N,A<:AbstractArray{T,N}} = Tensor{T,N,A}(data, collect(inds))
 Tensor(data::AbstractArray{T,0}) where {T} = Tensor(data, Index[])
 Tensor(data::Number) = Tensor(fill(data))
 
@@ -129,7 +129,7 @@ Return the location of the dimension of `tensor` corresponding to the given inde
 """
 dim(::Tensor, i::Number) = i
 dim(t::Tensor, i::Symbol) = dim(t, NamedIndex(i))
-dim(t::Tensor, i::Index) = findfirt(==(i), inds(t))
+dim(t::Tensor, i::Index) = findfirst(==(i), inds(t))
 
 # Iteration interface
 Base.IteratorSize(T::Type{Tensor}) = Iterators.IteratorSize(parenttype(T))
