@@ -52,12 +52,13 @@ Base.ndims(::CartesianSite{N}) where {N} = N
 Base.show(io::IO, x::Site) = print(io, "$(x.id)")
 
 # Bond interface
+abstract type Link <: Tag end
 """
     Bond(src, dst)
 
 Represents a bond between two [`Site`](@ref) objects.
 """
-struct Bond{A,B} <: Tag
+struct Bond{A,B} <: Link
     src::A
     dst::B
 
@@ -129,7 +130,7 @@ Base.last(bond::Bond) = bond.dst
 
 Represents a physical index related to a [`Site`](@ref) with an annotation of input or output.
 """
-Base.@kwdef struct Plug{S} <: Tag
+Base.@kwdef struct Plug{S} <: Link
     site::S
     isdual::Bool = false
 end
