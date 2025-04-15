@@ -6,6 +6,11 @@ Base.copy(x::Tag) = x
 # Site interface
 abstract type Site <: Tag end
 
+issite(::Tag) = false
+issite(::Site) = true
+
+is_site_equal(x, y) = site(x) == site(y)
+
 function site end
 site(x::Site) = x
 
@@ -75,6 +80,9 @@ macro bond_str(str)
     return :(Bond(@site_str($src), @site_str($dst)))
 end
 
+isbond(::Tag) = false
+isbond(::Bond) = true
+
 bond(x::Bond) = x
 
 Base.show(io::IO, x::Bond) = print(io, "$(x.src) <=> $(x.dst)")
@@ -132,10 +140,14 @@ Plug(@nospecialize(id::NTuple{N,Int}); kwargs...) where {N} = Plug(CartesianSite
 Plug(@nospecialize(id::Vararg{Int,N}); kwargs...) where {N} = Plug(CartesianSite(id); kwargs...)
 Plug(@nospecialize(id::CartesianIndex); kwargs...) = Plug(CartesianSite(id); kwargs...)
 
+isplug(::Tag) = false
+isplug(::Plug) = true
 isdual(x::Plug) = x.isdual
 
 site(x::Plug) = x.site
 plug(x::Plug) = x
+
+is_plug_equal(x, y) = plug(x) == plug(y)
 
 Base.adjoint(x::Plug) = Plug(site(x); isdual=!isdual(x))
 
