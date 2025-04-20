@@ -11,7 +11,7 @@ Base.copy(x::Index) = x
 Index(name::String) = Index(Symbol(name))
 
 # index management
-function findperm(from::Vector{I}, to::Vector{I}) where {I<:Index}
+function findperm(from::AbstractVector{I}, to::AbstractVector{I}) where {I<:Index}
     @assert issetequal(from, to)
 
     # if there are hyperindices, we remove one by one
