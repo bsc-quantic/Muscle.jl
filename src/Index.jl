@@ -3,7 +3,6 @@ struct Index{T}
 end
 
 const NamedIndex = Index{Symbol}
-const TagIndex{T<:Tag} = Index{T}
 
 # TODO checkout whether this is a good idea
 Base.copy(x::Index) = x
@@ -28,6 +27,9 @@ function findperm(from::AbstractVector{I}, to::AbstractVector{I}) where {I<:Inde
 end
 
 # required for `Tensor` constructor
-function Base.convert(::Type{ImmutableArray{Index,N}}, x::ImmutableArray{I,N}) where {I<:Index,N}
+function Base.convert(
+    ::Type{ImmutableArray{Index,N}},
+    x::ImmutableArray{I,N},
+) where {I<:Index,N}
     return ImmutableArray{Index,N}(x.data)
 end
