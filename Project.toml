@@ -4,6 +4,7 @@ authors = ["Sergio Sánchez Ramírez <sergio.sanchez.ramirez@bsc.es> and contrib
 version = "0.3.0-DEV"
 
 [deps]
+ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 EinExprs = "b1794770-133b-4de1-afb4-526377e9f4c5"
@@ -24,6 +25,7 @@ MuscleDaggerExt = "Dagger"
 MuscleReactantExt = "Reactant"
 
 [compat]
+ArgCheck = "2.5.0"
 CUDA = "5.7.0"
 ChainRulesCore = "1.0"
 Compat = "4.16.0"
