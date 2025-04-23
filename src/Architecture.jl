@@ -16,3 +16,8 @@ struct ReactantMemorySpace <: MemorySpace end
 
 memoryspace(::Array) = DefaultMemorySpace()
 memoryspace(::CuArray) = CUDAMemorySpace()
+memoryspace(x::Tensor) = memoryspace(parent(x))
+
+arch(x::AbstractArray) = arch(memoryspace(x))
+arch(::DefaultMemorySpace) = CPU()
+arch(::CUDAMemorySpace) = GPU()

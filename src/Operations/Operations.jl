@@ -1,6 +1,7 @@
 module Operations
 
-using ..Muscle: CPU, GPU, Tensor
+using ..Muscle: Tensor, Index, inds
+using ..Muscle: arch, CPU, GPU
 
 include("BinaryEinsum.jl")
 include("SimpleUpdate.jl")
