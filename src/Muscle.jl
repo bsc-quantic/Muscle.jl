@@ -13,6 +13,8 @@ export Tensor
 
 include("Architecture.jl")
 
+include("Operations/Operations.jl")
+
 # rexports from EinExprs
 export inds
 
