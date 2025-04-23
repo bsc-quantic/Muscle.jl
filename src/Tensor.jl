@@ -272,16 +272,16 @@ function Base.view(t::Tensor, i...)
     return Tensor(view(parent(t), i...), [label for (label, j) in zip(inds(t), i) if !(j isa Integer)])
 end
 
-function Base.view(t::Tensor, inds::P...) where {I<:Index,P<:Base.Pair{I}}
-    indices = map(Tenet.inds(t)) do ind
-        i = findfirst(x -> x == ind, first.(inds))
-        !isnothing(i) ? inds[i].second : Colon()
+function Base.view(t::Tensor, indices::P...) where {I<:Index,P<:Base.Pair{I}}
+    indices = map(inds(t)) do ind
+        i = findfirst(x -> x == ind, first.(indices))
+        !isnothing(i) ? indices[i].second : Colon()
     end
 
     let data = view(parent(t), indices...),
-        inds = [label for (index, label) in zip(indices, Tenet.inds(t)) if !(index isa Integer)]
+        indices = [label for (index, label) in zip(indices, inds(t)) if !(index isa Integer)]
 
-        Tensor(data, inds)
+        Tensor(data, indices)
     end
 end
 
@@ -328,9 +328,9 @@ function expand(tensor::Tensor; label, axis=1, size=1, method=:zeros)
         throw(ArgumentError("method \"$method\" is not valid"))
     end
 
-    inds = (Tenet.inds(tensor)[1:(axis-1)]..., label, Tenet.inds(tensor)[axis:end]...)
+    indices = (inds(tensor)[1:(axis-1)]..., label, inds(tensor)[axis:end]...)
 
-    return Tensor(data, inds)
+    return Tensor(data, indices)
 end
 
 function expand_zeros(array, axis, size)
