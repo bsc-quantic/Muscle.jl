@@ -10,6 +10,7 @@ function binary_einsum! end
 function binary_einsum(a, b; kwargs...)
     c = allocate_result(binary_einsum, a, b; kwargs...)
     binary_einsum!(c, a, b; kwargs...)
+    return c
 end
 
 function allocate_result(
@@ -31,7 +32,8 @@ end
 
 function binary_einsum!(c, a, b; kwargs...)
     @argcheck arch(c) == arch(a) == arch(b)
-    binary_einsum(arch(c), parent(c), inds(c), parent(a), inds(a), parent(b), inds(b); kwargs...)
+    binary_einsum!(arch(c), parent(c), inds(c), parent(a), inds(a), parent(b), inds(b); kwargs...)
+    return c
 end
 
 function binary_einsum!(
