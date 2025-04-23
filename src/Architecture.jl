@@ -1,4 +1,5 @@
 using CUDA
+using LinearAlgebra: LinearAlgebra
 
 abstract type Vendor end
 struct Intel <: Vendor end
@@ -15,6 +16,8 @@ struct CUDAMemorySpace <: MemorySpace end
 struct ReactantMemorySpace <: MemorySpace end
 
 memoryspace(::Array) = DefaultMemorySpace()
+memoryspace(x::Base.ReshapedArray) = memoryspace(parent(x))
+memoryspace(x::LinearAlgebra.Transpose) = memoryspace(parent(x))
 memoryspace(::CuArray) = CUDAMemorySpace()
 memoryspace(x::Tensor) = memoryspace(parent(x))
 
