@@ -2,16 +2,18 @@ using LinearAlgebra: LinearAlgebra
 using cuTensorNet: cuTensorNet
 using ..Muscle: factorinds
 
+# TODO implement low-rank approximations (truncated SVD, reduced SVD...)
+
 """
-    Operations.tensor_svd_thin(tensor::Tensor; inds_u, inds_v, s_ind, kwargs...)
+    Operations.tensor_svd_thin(tensor::Tensor; inds_u, inds_v, ind_s, kwargs...)
 
 Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be specified.
 
 # Keyword arguments
 
-  - `inds_u`: left / U indices to be used in the SVD factorization, except for `s_ind`.
-  - `inds_v`: right / right indices to be used in the SVD factorization, except for `s_ind`.
-  - `s_ind`: name of the virtual bond.
+  - `inds_u`: left / U indices to be used in the SVD factorization, except for `ind_s`.
+  - `inds_v`: right / right indices to be used in the SVD factorization, except for `ind_s`.
+  - `ind_s`: name of the virtual bond.
   - `maxdim`: maximum dimension of the virtual bond.
   - `inplace`: If `true`, it will use `A` as workspace variable to save space. Defaults to `false`.
   - `kwargs...`: additional keyword arguments to be passed to `LinearAlgebra.svd`.
@@ -22,15 +24,15 @@ function tensor_svd_thin! end
 # dispatch to correct architecture
 tensor_svd_thin(A::Tensor; kwargs...) = tensor_svd_thin(arch(A), A; kwargs...)
 
-function allocate_result(::typeof(tensor_svd_thin), A; left_inds=(), right_inds=(), virtualind=Index(Symbol(uuid4())), maxdim=nothing, kwargs...)
-    left_inds, right_inds = factorinds(inds(A), left_inds, right_inds)
-    left_extent = prod(Base.Fix1(size, A), left_inds)
-    right_extent = prod(Base.Fix1(size, A), right_inds)
+function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), maxdim=nothing, kwargs...)
+    inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
+    left_extent = prod(Base.Fix1(size, A), inds_u)
+    right_extent = prod(Base.Fix1(size, A), inds_v)
     maxdim = isnothing(maxdim) ? min(left_extent, right_extent) : maxdim
 
-    U = Tensor(similar(parent(A), left_extent..., maxdim), [left_inds..., virtualind])
-    s = Tensor(similar(parent(A), maxdim), [virtualind])
-    V = Tensor(similar(parent(A), right_extent..., maxdim), [right_inds..., virtualind])
+    U = Tensor(similar(parent(A), left_extent..., maxdim), [inds_u..., ind_s])
+    s = Tensor(similar(parent(A), maxdim), [ind_s])
+    V = Tensor(similar(parent(A), right_extent..., maxdim), [inds_v..., ind_s])
 
     return U, s, V
 end
@@ -76,26 +78,22 @@ end
 function tensor_svd_thin(
     ::CPU,
     A::Tensor;
-    left_inds=(),
-    right_inds=(),
-    virtualind=Index(gensym(:vind)),
+    inds_u=(),
+    inds_v=(),
+    ind_s=Index(gensym(:vind)),
     inplace=false,
     maxdim=nothing,
     kwargs...,
 )
-    left_inds, right_inds = factorinds(inds(A), left_inds, right_inds)
-    @argcheck isdisjoint(left_inds, right_inds)
-    @argcheck issetequal(left_inds ∪ right_inds, inds(A))
-    @argcheck virtualind ∉ inds(A)
-
-    inds_u = [left_inds; virtualind]
-    inds_v = [right_inds; virtualind]
-    inds_s = [virtualind]
+    inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
+    @argcheck isdisjoint(inds_u, inds_v)
+    @argcheck issetequal(inds_u ∪ inds_v, inds(A))
+    @argcheck ind_s ∉ inds(A)
 
     # permute array
-    left_sizes = map(Base.Fix1(size, A), left_inds)
-    right_sizes = map(Base.Fix1(size, A), right_inds)
-    Amat = permutedims(A, [left_inds..., right_inds...])
+    left_sizes = map(Base.Fix1(size, A), inds_u)
+    right_sizes = map(Base.Fix1(size, A), inds_v)
+    Amat = permutedims(A, [inds_u..., inds_v...])
     Amat = reshape(parent(Amat), prod(left_sizes), prod(right_sizes))
 
     # compute SVD
@@ -106,17 +104,9 @@ function tensor_svd_thin(
     end
 
     # tensorify results
-    U = Tensor(reshape(U, left_sizes..., size(U, 2)), inds_u)
-    s = Tensor(s, inds_s)
-    Vt = Tensor(reshape(conj(V), right_sizes..., size(V, 2)), inds_v)
-
-    # ad-hoc truncation
-    # TODO use low-rank approximations
-    if !isnothing(maxdim)
-        U = view(U, inds_s => 1:maxdim)
-        s = view(s, inds_s => 1:maxdim)
-        Vt = view(Vt, inds_s => 1:maxdim)
-    end
+    U = Tensor(reshape(U, left_sizes..., size(U, 2)), [inds_u; ind_s])
+    s = Tensor(s, [ind_s])
+    Vt = Tensor(reshape(conj(V), right_sizes..., size(V, 2)), [inds_v; ind_s])
 
     return U, s, Vt
 end
