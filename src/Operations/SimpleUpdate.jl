@@ -47,42 +47,51 @@ end
 function simple_update(
     ::CPU,
     A::Tensor,
-    ind_physical_a::Symbol,
+    ind_physical_a::Index,
     B::Tensor,
-    ind_physical_b::Symbol,
-    ind_bond_ab::Symbol,
+    ind_physical_b::Index,
+    ind_bond_ab::Index,
     G::Tensor,
-    ind_physical_g_a::Symbol,
-    ind_physical_g_b::Symbol;
+    ind_physical_g_a::Index,
+    ind_physical_g_b::Index;
     normalize::Bool=false,
     absorb::AbsorbBehavior=DontAbsorb(),
     atol::Float64=0.0,
     rtol::Float64=0.0,
+    maxdim=nothing,
 )
-    Θ = contract(
-        contract(A, B; dims=[ind_bond_ab]),
+    Θ = binary_einsum(
+        binary_einsum(A, B; dims=[ind_bond_ab]),
         G;
         dims=[ind_physical_a, ind_physical_b],
     )
     Θ = replace(Θ, ind_physical_g_a => ind_physical_a, ind_physical_g_b => ind_physical_b)
 
+    inds_u = setdiff(inds(A), [ind_bond_ab])
+    inds_v = setdiff(inds(B), [ind_bond_ab])
+    ind_s = ind_bond_ab
+    U, S, V = tensor_svd_thin(Θ; inds_u, inds_v, ind_s, maxdim)
+
     # TODO use low-rank approximations
-    u_inds = setdiff(vinds(A), [ind_bond_ab])
-    v_inds = setdiff(vinds(B), [ind_bond_ab])
-    U, S, V = svd(Θ; u_inds, v_inds, s_ind=ind_bond_ab)
+    # ad-hoc truncation
+    if !isnothing(maxdim)
+        U = view(U, ind_s => 1:maxdim)
+        S = view(S, ind_s => 1:maxdim)
+        V = view(V, ind_s => 1:maxdim)
+    end
 
     normalize && LinearAlgebra.normalize!(S)
 
     if absorb isa DontAbsorb
         return U, S, V
     elseif absorb isa AbsorbU
-        U = contract(U, S; dims=[])
+        U = binary_einsum(U, S; dims=[])
     elseif absorb isa AbsorbV
-        V = contract(V, S; dims=[])
+        V = binary_einsum(V, S; dims=[])
     elseif absorb isa AbsorbEqually
         S_sqrt = sqrt.(S)
-        U = contract(U, S_sqrt; dims=[])
-        V = contract(V, S_sqrt; dims=[])
+        U = binary_einsum(U, S_sqrt; dims=[])
+        V = binary_einsum(V, S_sqrt; dims=[])
     end
 
     return U, V
@@ -93,24 +102,28 @@ end
 # TODO cache workspace memory
 # TODO do QR before SU to reduce computational cost on A,B with ninds > 3 but not when size(extent) ~ size(rest)
 function simple_update(
-    ::GPU{NVIDIA},
+    ::GPU,
     A::Tensor,
-    ind_physical_a::Symbol,
+    ind_physical_a::Index,
     B::Tensor,
-    ind_physical_b::Symbol,
-    ind_bond_ab::Symbol,
+    ind_physical_b::Index,
+    ind_bond_ab::Index,
     G::Tensor,
-    ind_physical_g_a::Symbol,
-    ind_physical_g_b::Symbol;
+    ind_physical_g_a::Index,
+    ind_physical_g_b::Index;
     normalize::Bool=false,
     absorb::AbsorbBehavior=DontAbsorb(),
     atol::Float64=0.0,
     rtol::Float64=0.0,
+    maxdim=nothing,
 )
-    all_inds = unique(∪(vinds(A), vinds(B), vinds(G)))
-    modes_a = Int[findfirst(==(i), all_inds) for i in vinds(A)]
-    modes_b = Int[findfirst(==(i), all_inds) for i in vinds(B)]
-    modes_g = Int[findfirst(==(i), all_inds) for i in vinds(G)]
+    all_inds = unique(∪(inds(A), inds(B), inds(G)))
+    modes_a = Int[findfirst(==(i), all_inds) for i in inds(A)]
+    modes_b = Int[findfirst(==(i), all_inds) for i in inds(B)]
+    modes_g = Int[findfirst(==(i), all_inds) for i in inds(G)]
+
+    # TODO implement maxdim for simple_update on GPU (i think we just need to correctly size U and V beforehand)
+    !isnothing(maxdim) && error("simple_update with maxdim kwarg not yet implemented for GPU")
 
     U = similar(A)
     V = similar(B)
@@ -119,8 +132,8 @@ function simple_update(
     U = replace(U, ind_physical_a => ind_physical_g_a)
     V = replace(V, ind_physical_b => ind_physical_g_b)
 
-    modes_u = Int[findfirst(==(i), all_inds) for i in vinds(U)]
-    modes_v = Int[findfirst(==(i), all_inds) for i in vinds(V)]
+    modes_u = Int[findfirst(==(i), all_inds) for i in inds(U)]
+    modes_v = Int[findfirst(==(i), all_inds) for i in inds(V)]
 
     svd_config = cuTensorNet.SVDConfig(;
         abs_cutoff=atol,
