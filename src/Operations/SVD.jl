@@ -78,7 +78,7 @@ function tensor_svd_thin(
     A::Tensor;
     left_inds=(),
     right_inds=(),
-    virtualind,
+    virtualind=Index(gensym(:vind)),
     inplace=false,
     maxdim=nothing,
     kwargs...,
