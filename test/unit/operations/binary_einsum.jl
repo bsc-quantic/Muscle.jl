@@ -146,3 +146,34 @@ end
     @test size(C) == (2, 4, 6) broken = true
     @test parent(C) == 3 * ones(2, 4, 6) broken = true
 end
+
+@testset "manual" begin
+    @testset "eltype = $T" for T in [Float64, ComplexF64]
+        A = Tensor(ones(T, 2, 3, 4), Index.([:i, :j, :k]))
+        B = Tensor(ones(T, 4, 5, 3), Index.([:k, :l, :j]))
+
+        # contraction of all common indices
+        C = Operations.binary_einsum(A, B; dims=[Index(:j), Index(:k)])
+
+        @test inds(C) == [Index(:i), Index(:l)]
+        @test size(C) == (2, 5)
+        @test parent(C) ≈ begin
+            A_mat = reshape(parent(A), 2, 12)
+            B_mat = reshape(permutedims(parent(B), [3, 1, 2]), 12, 5)
+            A_mat * B_mat
+        end
+
+        # contraction of NOT all common indices
+        C = Operations.binary_einsum(A, B; dims=[Index(:j)])
+
+        @test inds(C) == [Index(:i), Index(:k), Index(:l)]
+        @test size(C) == (2, 4, 5)
+        @test parent(C) ≈ begin
+            C = zeros(2, 4, 5)
+            for i in 1:2, j in 1:3, k in 1:4, l in 1:5
+                C[i, k, l] += A[i, j, k] * B[k, l, j]
+            end
+            C
+        end
+    end
+end
