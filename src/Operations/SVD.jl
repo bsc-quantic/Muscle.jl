@@ -3,14 +3,14 @@ using cuTensorNet: cuTensorNet
 using ..Muscle: factorinds
 
 """
-    Operations.tensor_svd_thin(tensor::Tensor; u_inds, v_inds, s_ind, kwargs...)
+    Operations.tensor_svd_thin(tensor::Tensor; inds_u, inds_v, s_ind, kwargs...)
 
-Perform SVD factorization on a tensor. Either `u_inds` or `v_inds` must be specified.
+Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be specified.
 
 # Keyword arguments
 
-  - `u_inds`: left / U indices to be used in the SVD factorization, except for `s_ind`.
-  - `v_inds`: right / right indices to be used in the SVD factorization, except for `s_ind`.
+  - `inds_u`: left / U indices to be used in the SVD factorization, except for `s_ind`.
+  - `inds_v`: right / right indices to be used in the SVD factorization, except for `s_ind`.
   - `s_ind`: name of the virtual bond.
   - `maxdim`: maximum dimension of the virtual bond.
   - `inplace`: If `true`, it will use `A` as workspace variable to save space. Defaults to `false`.
@@ -78,29 +78,24 @@ function tensor_svd_thin(
     A::Tensor;
     left_inds=(),
     right_inds=(),
+    virtualind,
+    inplace=false,
+    maxdim=nothing,
     kwargs...,
 )
     left_inds, right_inds = factorinds(inds(A), left_inds, right_inds)
-    tensor_svd_thin()
-end
-function tensor_svd_thin(
-    ::CPU,
-    A::AbstractArray,
-    inds_a,
-    inds_u,
-    ind_s,
-    inds_v;
-    kwargs...
-)
-    @assert isdisjoint(u_inds, v_inds)
-    @assert u_inds ⊆ inds(A)
-    @assert v_inds ⊆ inds(A)
-    @assert s_ind ∉ inds(A)
+    @argcheck isdisjoint(left_inds, right_inds)
+    @argcheck issetequal(left_inds ∪ right_inds, inds(A))
+    @argcheck virtualind ∉ inds(A)
+
+    inds_u = [left_inds; virtualind]
+    inds_v = [right_inds; virtualind]
+    inds_s = [virtualind]
 
     # permute array
-    left_sizes = map(Base.Fix1(size, A), u_inds)
-    right_sizes = map(Base.Fix1(size, A), v_inds)
-    Amat = permutedims(A, [u_inds..., v_inds...])
+    left_sizes = map(Base.Fix1(size, A), left_inds)
+    right_sizes = map(Base.Fix1(size, A), right_inds)
+    Amat = permutedims(A, [left_inds..., right_inds...])
     Amat = reshape(parent(Amat), prod(left_sizes), prod(right_sizes))
 
     # compute SVD
@@ -111,23 +106,23 @@ function tensor_svd_thin(
     end
 
     # tensorify results
-    U = Tensor(reshape(U, left_sizes..., size(U, 2)), [u_inds..., s_ind])
-    s = Tensor(s, [s_ind])
-    Vt = Tensor(reshape(conj(V), right_sizes..., size(V, 2)), [v_inds..., s_ind])
+    U = Tensor(reshape(U, left_sizes..., size(U, 2)), inds_u)
+    s = Tensor(s, inds_s)
+    Vt = Tensor(reshape(conj(V), right_sizes..., size(V, 2)), inds_v)
 
     # ad-hoc truncation
     # TODO use low-rank approximations
     if !isnothing(maxdim)
-        U = view(U, s_ind => 1:maxdim)
-        s = view(s, s_ind => 1:maxdim)
-        Vt = view(Vt, s_ind => 1:maxdim)
+        U = view(U, inds_s => 1:maxdim)
+        s = view(s, inds_s => 1:maxdim)
+        Vt = view(Vt, inds_s => 1:maxdim)
     end
 
     return U, s, Vt
 end
 
 # GPU - CUDA
-function tensor_svd_thin!(arch::GPU, A::Tensor; kwargs...)
+function tensor_svd_thin(arch::GPU, A::Tensor; kwargs...)
     U, s, V = allocate_result(tensor_svd_thin, A; kwargs...)
     tensor_svd_thin!(arch, A, U, s, V; kwargs...)
 end
@@ -146,19 +141,21 @@ end
 function tensor_svd_thin!(
     ::GPU,
     A::AbstractArray,
-    ia,
+    inds_a,
     U::AbstractArray,
-    iu,
+    inds_u,
     s::AbstractArray,
     V::AbstractArray,
-    iv;
+    inds_v;
     kwargs...
 )
-    modemap = Dict{Index,Int}(ind => i for (i, ind) in enumerate(unique(ia ∪ iu ∪ iv)))
+    modemap = Dict{Index,Int}(ind => i for (i, ind) in enumerate(unique(inds_a ∪ inds_u ∪ inds_v)))
     modes_a = [modemap[ind] for ind in inds(A)]
     modes_u = [modemap[ind] for ind in inds(U)]
     modes_v = [modemap[ind] for ind in inds(V)]
-    LinearAlgebra.svd!(parent(A), modes_a, parent(U), modes_u, parent(s), parent(V), modes_v; kwargs...)
+
+    # call to cuTensorNet SVD method is implemented as `LinearAlgebra.svd!`
+    LinearAlgebra.svd!(A, modes_a, U, modes_u, s, V, modes_v; kwargs...)
 
     return u, s, v
 end

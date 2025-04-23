@@ -3,8 +3,9 @@ using Test
 
 @testset "Unit" verbose = true begin
     @testset "Operations" verbose = true begin
-        # @testset "Unary Einsum" include("unit/operations/unary_einsum.jl")
-        @testset "Binary Einsum" include("unit/operations/binary_einsum.jl")
+        # @testset "unary_einsum" include("unit/operations/unary_einsum.jl")
+        @testset "binary_einsum" include("unit/operations/binary_einsum.jl")
+        @testset "tensor_svd_thin" include("unit/operations/tensor_svd_thin.jl")
     end
 end
 
