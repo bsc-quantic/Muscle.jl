@@ -1,6 +1,9 @@
 using Test
 using Muscle: Tensor, Index, Operations
 
+# TODO numeric test with non-random data
+# TODO test on NVIDIA GPU
+
 A = Tensor(rand(ComplexF64, 2, 4, 6, 8), [Index(:i), Index(:j), Index(:k), Index(:l)])
 
 # throw if inds_u is not provided
