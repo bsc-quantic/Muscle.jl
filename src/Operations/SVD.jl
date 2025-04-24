@@ -14,7 +14,6 @@ Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be speci
   - `inds_u`: left / U indices to be used in the SVD factorization, except for `ind_s`.
   - `inds_v`: right / right indices to be used in the SVD factorization, except for `ind_s`.
   - `ind_s`: name of the virtual bond.
-  - `maxdim`: maximum dimension of the virtual bond.
   - `inplace`: If `true`, it will use `A` as workspace variable to save space. Defaults to `false`.
   - `kwargs...`: additional keyword arguments to be passed to `LinearAlgebra.svd`.
 """
@@ -24,15 +23,15 @@ function tensor_svd_thin! end
 # dispatch to correct architecture
 tensor_svd_thin(A::Tensor; kwargs...) = tensor_svd_thin(arch(A), A; kwargs...)
 
-function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), maxdim=nothing, kwargs...)
+function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), kwargs...)
     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
     left_extent = prod(Base.Fix1(size, A), inds_u)
     right_extent = prod(Base.Fix1(size, A), inds_v)
-    maxdim = isnothing(maxdim) ? min(left_extent, right_extent) : maxdim
+    s_extent = min(left_extent, right_extent)
 
-    U = Tensor(similar(parent(A), left_extent..., maxdim), [inds_u..., ind_s])
-    s = Tensor(similar(parent(A), maxdim), [ind_s])
-    V = Tensor(similar(parent(A), right_extent..., maxdim), [inds_v..., ind_s])
+    U = Tensor(similar(parent(A), left_extent..., s_extent), [inds_u..., ind_s])
+    s = Tensor(similar(parent(A), s_extent), [ind_s])
+    V = Tensor(similar(parent(A), right_extent..., s_extent), [inds_v..., ind_s])
 
     return U, s, V
 end
@@ -82,7 +81,6 @@ function tensor_svd_thin(
     inds_v=(),
     ind_s=Index(gensym(:vind)),
     inplace=false,
-    maxdim=nothing,
     kwargs...,
 )
     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)

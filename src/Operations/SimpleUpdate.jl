@@ -70,7 +70,7 @@ function simple_update(
     inds_u = setdiff(inds(A), [ind_bond_ab])
     inds_v = setdiff(inds(B), [ind_bond_ab])
     ind_s = ind_bond_ab
-    U, S, V = tensor_svd_thin(Θ; inds_u, inds_v, ind_s, maxdim)
+    U, S, V = tensor_svd_thin(Θ; inds_u, inds_v, ind_s)
 
     # TODO use low-rank approximations
     # ad-hoc truncation
