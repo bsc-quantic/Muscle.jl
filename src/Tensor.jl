@@ -39,6 +39,7 @@ Construct a tensor with the given data and indices.
 Tensor(data::A, inds::NTuple{N}) where {T,N,A<:AbstractArray{T,N}} = Tensor{T,N,A}(data, collect(inds))
 Tensor(data::AbstractArray{T,0}) where {T} = Tensor(data, Index[])
 Tensor(data::Number) = Tensor(fill(data))
+Tensor{T,N,A}(data::A, inds::AbstractVector) where {T,N,A<:AbstractArray{T,N}} = Tensor(data, ImmutableVector(inds))
 
 # useful methods
 Tensor(data::AbstractArray, inds::Vector{Symbol}) = Tensor(data, map(Index, inds))
@@ -157,7 +158,8 @@ Return the element of the tensor at the given indices. If kwargs are provided, t
 @propagate_inbounds Base.getindex(t::Tensor, i...) = getindex(parent(t), i...)
 @propagate_inbounds function Base.getindex(t::Tensor; i...)
     length(i) == 0 && return (getindex ∘ parent)(t)
-    return getindex(t, [get(i, label, Colon()) for label in inds(t)]...)
+    # WARN `label.tag` might not be stable
+    return getindex(t, [get(i, label.tag, Colon()) for label in inds(t)]...)
 end
 
 """
@@ -200,6 +202,9 @@ Base.axes(t::Tensor, d) = axes(parent(t), dim(t, d))
 # StridedArrays interface
 Base.strides(t::Tensor) = strides(parent(t))
 Base.stride(t::Tensor, i) = stride(parent(t), dim(t, i))
+
+# fix ambiguity
+Base.stride(t::Tensor, i::Integer) = stride(parent(t), i)
 
 Base.unsafe_convert(::Type{Ptr{T}}, t::Tensor{T}) where {T} = Base.unsafe_convert(Ptr{T}, parent(t))
 

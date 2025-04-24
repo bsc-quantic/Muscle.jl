@@ -2,6 +2,7 @@ using Muscle
 using Test
 
 @testset "Unit" verbose = true begin
+    @testset "Tensor" include("unit/tensor.jl")
     @testset "Operations" verbose = true begin
         # @testset "unary_einsum" include("unit/operations/unary_einsum.jl")
         @testset "binary_einsum" include("unit/operations/binary_einsum.jl")
