@@ -1,53 +1,40 @@
+using ArgCheck
 using LinearAlgebra
 using OMEinsum: OMEinsum
 
-function einsum(einstr::String, a, b)
-    m = match(r"(?<a>\w*),(?<b>\w*)->(?<c>\w*)", einstr)
-    ia = isnothing(m[:a]) ? Char[] : collect(m[:a])
-    ib = isnothing(m[:b]) ? Char[] : collect(m[:b])
-    ic = isnothing(m[:c]) ? Char[] : collect(m[:c])
-    return einsum(ic, a, ia, b, ib)
-end
+function unary_einsum end
+function unary_einsum! end
 
-function einsum(einstr::String, a)
-    m = match(r"(?<a>\w*)->(?<c>\w*)", einstr)
-    ia = collect(m[:a])
-    ic = isnothing(m[:c]) ? Char[] : collect(m[:c])
-    return einsum(ic, a, ia)
-end
+function binary_einsum end
+function binary_einsum! end
 
-function einsum(ic, a, ia, b, ib)
-    size_dict = [size(i in ia ? a : b, findfirst(==(i), i in ia ? ia : ib)) for i in ic]
-    c = OMEinsum.get_output_array((a, b), size_dict; fillzero=false)
-    return einsum!(c, ic, a, ia, b, ib)
-end
-
-function einsum(ic, a, ia)
-    size_dict = [size(a, findfirst(==(i), ia)) for i in ic]
-    c = OMEinsum.get_output_array((a,), size_dict; fillzero=false)
-    return einsum!(c, ic, a, ia)
-end
-
-function einsum!(c, ic, a, ia, b, ib)
-    ixs = (ia, ib)
-    iy = ic
-    xs = (a, b)
-    y = c
-    size_dict = Dict{Char,Int}([(ia .=> size(a))..., (ib .=> size(b))...])
-
-    OMEinsum.einsum!(ixs, iy, xs, y, true, false, size_dict)
-
+function binary_einsum(a::Tensor, b::Tensor; kwargs...)
+    a, b = promote_memspace(a, b)
+    c = allocate_result(binary_einsum, a, b; kwargs...)
+    binary_einsum!(c, a, b; kwargs...)
     return c
 end
 
-function einsum!(c, ic, a, ia)
-    ixs = (ia,)
-    iy = ic
-    xs = (a,)
-    y = c
-    size_dict = Dict(ia .=> size(a))
+# TODO dispatch based on memory-space
+function allocate_result(
+    ::typeof(binary_einsum), a::Tensor, b::Tensor; fillzero=false, dims=(∩(inds(a), inds(b))), out=nothing
+)
+    ia = collect(inds(a))
+    ib = collect(inds(b))
+    i = ∩(dims, ia, ib)
 
-    OMEinsum.einsum!(ixs, iy, xs, y, true, false, size_dict)
+    ic = if isnothing(out)
+        setdiff(ia ∪ ib, i isa Base.AbstractVecOrTuple ? i : [i])
+    else
+        out
+    end
 
+    data = OMEinsum.get_output_array((parent(a), parent(b)), Int[size(i in ia ? a : b, i) for i in ic]; fillzero)
+    return Tensor(data, ic)
+end
+
+function binary_einsum!(c::Tensor, a::Tensor, b::Tensor; kwargs...)
+    @argcheck arch(c) == arch(a) == arch(b)
+    Operations.binary_einsum!(arch(c), parent(c), inds(c), parent(a), inds(a), parent(b), inds(b); kwargs...)
     return c
 end

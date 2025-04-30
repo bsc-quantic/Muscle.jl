@@ -48,9 +48,9 @@ function Tensor{T,N,A}(data::A, inds::Vector{Symbol}) where {T,N,A<:AbstractArra
 end
 
 inds(x::Tensor) = x.inds
+memory_space(x::Tensor) = memory_space(parent(x))
 
 Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
-
 
 """
     Base.similar(::Tensor{T,N}[, S::Type, dims::Base.Dims{N}; inds])

@@ -8,10 +8,13 @@ include("Utils/Utils.jl")
 include("Index.jl")
 export Index
 
+include("Architecture.jl")
+
 include("Tensor.jl")
 export Tensor
 
-include("Architecture.jl")
+include("Einsum.jl")
+export unary_einsum, unary_einsum!, binary_einsum, binary_einsum!
 
 include("Operations/Operations.jl")
 
