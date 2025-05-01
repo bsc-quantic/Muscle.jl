@@ -2,6 +2,7 @@ module MuscleReactantExt
 
 using Muscle
 using Reactant
+using Reactant: TracedRNumber, TracedRArray
 const MLIR = Reactant.MLIR
 const stablehlo = MLIR.Dialects.stablehlo
 
@@ -41,6 +42,9 @@ function Reactant.Compiler.create_result(@nospecialize(tocopy::Tensor), @nospeci
     data = Reactant.Compiler.create_result(parent(tocopy), Reactant.append_path(path, :data), args...)
     return :($Tensor($data, $(inds(tocopy))))
 end
+
+Muscle.memory_space(::TracedRArray) = Muscle.ReactantMemorySpace()
+Muscle.memory_space(::Reactant.AnyConcreteRArray) = Muscle.ReactantMemorySpace()
 
 function Muscle.unary_einsum(
     @nospecialize(a::Tensor{TracedRNumber{T},N,TracedRArray{T,N}}); dims=nonunique(inds(a)), out=nothing
