@@ -1,5 +1,5 @@
 using Test
-using Muscle: Tensor, Index, Operations
+using Muscle: Tensor, Index
 using LinearAlgebra: LinearAlgebra
 
 # TODO test on NVIDIA GPU
@@ -34,7 +34,7 @@ op_cx = Tensor(
 )
 
 @testset "apply identity" begin
-    U, s, V = Operations.simple_update(
+    U, s, V = Muscle.simple_update(
         Γa, Index((; site=1, cut=1)),
         Γb, Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
@@ -45,12 +45,12 @@ op_cx = Tensor(
     @test V ≈ Γb
     @test s == Tensor([1.0, 1.0], [Index((; bond=(1, 2)))])
 
-    ψ = Operations.binary_einsum(Operations.binary_einsum(U, s; dims=Index[]), V)
-    @test Operations.binary_einsum(ψ, conj(ψ)) |> only ≈ 2.0
+    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 2.0
 end
 
 @testset "apply cx" begin
-    U, s, V = Operations.simple_update(
+    U, s, V = Muscle.simple_update(
         Γa, Index((; site=1, cut=1)),
         Γb, Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
@@ -61,12 +61,12 @@ end
     @test V ≈ Tensor(1 / √2 * [1 -1; 1 1], [Index((; site=2, cut=1)), Index((; bond=(1, 2)))])
     @test s == Tensor([√2, 0.0], [Index((; bond=(1, 2)))])
 
-    ψ = Operations.binary_einsum(Operations.binary_einsum(U, s; dims=Index[]), V)
-    @test Operations.binary_einsum(ψ, conj(ψ)) |> only ≈ 2.0
+    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 2.0
 end
 
 @testset "apply identity, normalize" begin
-    U, s, V = Operations.simple_update(
+    U, s, V = Muscle.simple_update(
         Γa, Index((; site=1, cut=1)),
         Γb, Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
@@ -78,12 +78,12 @@ end
     @test V ≈ Γb
     @test s ≈ Tensor([1 / √2, 1 / √2], [Index((; bond=(1, 2)))])
 
-    ψ = Operations.binary_einsum(Operations.binary_einsum(U, s; dims=Index[]), V)
-    @test Operations.binary_einsum(ψ, conj(ψ)) |> only ≈ 1.0
+    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 1.0
 end
 
 @testset "apply cx, normalize" begin
-    U, s, V = Operations.simple_update(
+    U, s, V = Muscle.simple_update(
         Γa, Index((; site=1, cut=1)),
         Γb, Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
@@ -95,12 +95,12 @@ end
     @test V ≈ Tensor(1 / √2 * [1 -1; 1 1], [Index((; site=2, cut=1)), Index((; bond=(1, 2)))])
     @test s == Tensor([1.0, 0.0], [Index((; bond=(1, 2)))])
 
-    ψ = Operations.binary_einsum(Operations.binary_einsum(U, s; dims=Index[]), V)
-    @test Operations.binary_einsum(ψ, conj(ψ)) |> only ≈ 1.0
+    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 1.0
 end
 
 @testset "apply identity, truncate to χ=1" begin
-    U, s, V = Operations.simple_update(
+    U, s, V = Muscle.simple_update(
         Γa, Index((; site=1, cut=1)),
         Γb, Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
@@ -114,7 +114,7 @@ end
 end
 
 @testset "apply cx, truncate to χ=1" begin
-    U, s, V = Operations.simple_update(
+    U, s, V = Muscle.simple_update(
         Γa, Index((; site=1, cut=1)),
         Γb, Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),

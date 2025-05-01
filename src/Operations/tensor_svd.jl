@@ -5,7 +5,7 @@ using ..Muscle: factorinds
 # TODO implement low-rank approximations (truncated SVD, reduced SVD...)
 
 """
-    Operations.tensor_svd_thin(tensor::Tensor; inds_u, inds_v, ind_s, kwargs...)
+    Muscle.tensor_svd_thin(tensor::Tensor; inds_u, inds_v, ind_s, kwargs...)
 
 Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be specified.
 
