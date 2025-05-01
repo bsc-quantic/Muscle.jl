@@ -1,5 +1,6 @@
 using Muscle
 using Test
+using SafeTestsets
 
 @testset "Unit" verbose = true begin
     @testset "Tensor" include("unit/tensor.jl")
@@ -12,10 +13,14 @@ using Test
     end
 end
 
-# @testset "Integration" verbose = true begin
-#     include("integration/ChainRules_test.jl")
-#     include("integration/Dagger_test.jl")
-# end
+@testset "Integration" verbose = true begin
+    @safetestset "Reactant" begin
+        include("integration/reactant.jl")
+    end
+
+    #     include("integration/ChainRules_test.jl")
+    #     include("integration/Dagger_test.jl")
+end
 
 # using Aqua
 # Aqua.test_all(Muscle)
