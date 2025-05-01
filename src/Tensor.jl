@@ -95,10 +95,7 @@ Base.isapprox(a::Tensor, b::AbstractArray) = false
 function Base.isapprox(a::Tensor, b::Tensor; kwargs...)
     issetequal(inds(a), inds(b)) || return false
     perm = findperm(inds(a), inds(b))
-    return all(eachindex(IndexCartesian(), a)) do i
-        j = CartesianIndex(Tuple(permute!(collect(Tuple(i)), invperm(perm))))
-        isapprox(a[i], b[j]; kwargs...)
-    end
+    return isapprox(parent(a), PermutedDimsArray(parent(b), perm); kwargs...)
 end
 
 Base.isapprox(a::Tensor{T,0}, b::T; kwargs...) where {T} = isapprox(only(a), b; kwargs...)
