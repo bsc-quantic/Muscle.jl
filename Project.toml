@@ -4,6 +4,7 @@ authors = ["Sergio Sánchez Ramírez <sergio.sanchez.ramirez@bsc.es> and contrib
 version = "0.3.0"
 
 [deps]
+Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
@@ -15,13 +16,11 @@ cuTENSOR = "011b41b2-24ef-40a8-b3eb-fa098493e9e1"
 cuTensorNet = "448d79b3-4b49-4e06-a5ea-00c62c0dc3db"
 
 [weakdeps]
-Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
 Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 
 [extensions]
-MuscleAdaptExt = "Adapt"
 MuscleChainRulesCoreExt = "ChainRulesCore"
 MuscleDaggerExt = "Dagger"
 MuscleReactantExt = "Reactant"

@@ -1,6 +1,7 @@
 using Base: @propagate_inbounds
 using Base.Broadcast: Broadcasted, ArrayStyle
 using LinearAlgebra
+using Adapt
 
 """
     Tensor{T,N,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
@@ -48,9 +49,9 @@ function Tensor{T,N,A}(data::A, inds::Vector{Symbol}) where {T,N,A<:AbstractArra
 end
 
 inds(x::Tensor) = x.inds
-memory_space(x::Tensor) = memory_space(parent(x))
 
 Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
+Adapt.adapt_structure(to, x::Tensor) = Tensor(adapt(to, parent(x)), inds(x))
 
 """
     Base.similar(::Tensor{T,N}[, S::Type, dims::Base.Dims{N}; inds])
@@ -120,11 +121,11 @@ Base.replace(t::Tensor, old_new::P...) where {P<:Base.Pair} = Tensor(parent(t), 
 Return the underlying array of the tensor.
 """
 Base.parent(t::Tensor) = t.data
-parenttype(::Type{Tensor{T,N,A}}) where {T,N,A} = A
-parenttype(::Type{Tensor{T,N}}) where {T,N} = AbstractArray{T,N}
-parenttype(::Type{Tensor{T}}) where {T} = AbstractArray{T}
-parenttype(::Type{Tensor}) = AbstractArray
-parenttype(::T) where {T<:Tensor} = parenttype(T)
+Adapt.parent_type(::Type{Tensor{T,N,A}}) where {T,N,A} = A
+Adapt.parent_type(::Type{Tensor{T,N}}) where {T,N} = AbstractArray{T,N}
+Adapt.parent_type(::Type{Tensor{T}}) where {T} = AbstractArray{T}
+Adapt.parent_type(::Type{Tensor}) = AbstractArray
+Adapt.parent_type(::T) where {T<:Tensor} = parent_type(T)
 
 """
     dim(tensor::Tensor, i)
@@ -136,14 +137,14 @@ dim(t::Tensor, i::Symbol) = dim(t, NamedIndex(i))
 dim(t::Tensor, i::Index) = findfirst(==(i), inds(t))
 
 # Iteration interface
-Base.IteratorSize(T::Type{Tensor}) = Iterators.IteratorSize(parenttype(T))
-Base.IteratorEltype(T::Type{Tensor}) = Iterators.IteratorEltype(parenttype(T))
+Base.IteratorSize(T::Type{Tensor}) = Iterators.IteratorSize(parent_type(T))
+Base.IteratorEltype(T::Type{Tensor}) = Iterators.IteratorEltype(parent_type(T))
 
 Base.isdone(t::Tensor) = Base.isdone(parent(t))
 Base.isdone(t::Tensor, state) = Base.isdone(parent(t), state)
 
 # Indexing interface
-Base.IndexStyle(T::Type{<:Tensor}) = IndexStyle(parenttype(T))
+Base.IndexStyle(T::Type{<:Tensor}) = IndexStyle(parent_type(T))
 
 """
     Base.getindex(::Tensor, i...)
@@ -205,7 +206,7 @@ Base.stride(t::Tensor, i::Integer) = stride(parent(t), i)
 
 Base.unsafe_convert(::Type{Ptr{T}}, t::Tensor{T}) where {T} = Base.unsafe_convert(Ptr{T}, parent(t))
 
-Base.elsize(T::Type{<:Tensor}) = Base.elsize(parenttype(T))
+Base.elsize(T::Type{<:Tensor}) = Base.elsize(parent_type(T))
 
 # Broadcasting
 Base.BroadcastStyle(::Type{T}) where {T<:Tensor} = ArrayStyle{T}()

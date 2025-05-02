@@ -1,4 +1,5 @@
 using ArgCheck
+using Adapt
 using CUDA
 using LinearAlgebra: LinearAlgebra
 
@@ -12,26 +13,11 @@ struct CPUMemorySpace <: MemorySpace end
 struct CUDAMemorySpace <: MemorySpace end
 struct ReactantMemorySpace <: MemorySpace end
 
-memory_space(::Array) = CPUMemorySpace()
-memory_space(::CuArray) = CUDAMemorySpace()
-
-# dispatches for layouts
-memory_space(x::Base.ReshapedArray) = memory_space(parent(x))
-memory_space(x::Base.SubArray) = memory_space(parent(x))
-memory_space(x::Base.PermutedDimsArray) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.Transpose) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.Adjoint) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.Diagonal) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.Bidiagonal) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.SymTridiagonal) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.Tridiagonal) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.Symmetric) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.Hermitian) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.LowerTriangular) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.UpperTriangular) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.UnitLowerTriangular) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.UnitUpperTriangular) = memory_space(parent(x))
-memory_space(x::LinearAlgebra.UpperHessenberg) = memory_space(parent(x))
+memory_space(::T) where {T<:AbstractArray} = memory_space(T)
+memory_space(::Type{<:Array}) = CPUMemorySpace()
+memory_space(::Type{<:CuArray}) = CUDAMemorySpace()
+memory_space(::Type{T}) where {T<:WrappedArray} = memory_space(Adapt.unwrap_type(T))
+memory_space(x::Tensor) = memory_space(parent_type(x))
 
 abstract type Architecture end
 struct CPU <: Architecture end
