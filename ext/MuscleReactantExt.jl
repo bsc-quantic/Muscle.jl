@@ -6,6 +6,11 @@ using Reactant: TracedRNumber, TracedRArray
 const MLIR = Reactant.MLIR
 const stablehlo = MLIR.Dialects.stablehlo
 
+Muscle.memory_space(::Type{<:TracedRArray}) = Muscle.ReactantMemorySpace()
+Muscle.memory_space(::Type{<:Reactant.AnyConcreteRArray}) = Muscle.ReactantMemorySpace()
+
+Muscle.choose_backend(::typeof(Muscle.binary_einsum!), ::TracedRArray, ::TracedRArray, ::TracedRArray) = Muscle.BackendReactant()
+
 # we specify `mode` and `track_numbers` types due to ambiguity
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor}), seen, mode::Reactant.TraceMode, @nospecialize(track_numbers::Type), @nospecialize(sharding), @nospecialize(runtime)

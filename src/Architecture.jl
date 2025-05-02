@@ -32,3 +32,22 @@ function promote_memspace(a, b)
     @argcheck memory_space(a) == memory_space(b) "Memory spaces must be the same"
     return a, b
 end
+
+abstract type Backend end
+
+struct BackendOMEinsum <: Backend end
+struct BackendCUDA <: Backend end
+struct BackendCuTENSOR <: Backend end
+struct BackendCuTensorNet <: Backend end
+struct BackendReactant <: Backend end
+
+# set of loaded backends available for use
+const loaded_backends = Set{Backend}([BackendOMEinsum(), BackendCUDA()])
+
+function choose_backend end
+function allowed_backends end
+
+# choose_backend(f::Function, arrays::AbstractArray...) = choose_backend(f, arrays...)
+choose_backend(f::Function, arrays::Tensor...) = choose_backend(f, parent.(arrays)...)
+choose_backend(arrays::AbstractArray...) = choose_backend(unwrap_type.(arrays)...)
+choose_backend(arrays...) = missing
