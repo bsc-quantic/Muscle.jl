@@ -5,6 +5,9 @@ using cuTensorNet: cuTensorNet
 function simple_update end
 function simple_update! end
 
+choose_backend_rule(::typeof(simple_update), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendCustom()
+choose_backend_rule(::typeof(simple_update), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
+
 # absorb behavior trait
 # used to keep type-inference happy (`DontAbsorb` returns 3 tensors, while the rest return 2)
 abstract type AbsorbBehavior end
@@ -15,23 +18,20 @@ struct AbsorbEqually <: AbsorbBehavior end
 
 # TODO automatically move to GPU if G are on CPU?
 function simple_update(
-    A,
+    A::Tensor,
     ind_physical_a,
-    B,
+    B::Tensor,
     ind_physical_b,
     ind_bond_ab,
-    G,
+    G::Tensor,
     ind_physical_g_a,
     ind_physical_g_b;
     kwargs...,
 )
-    arch_a = arch(A)
-    arch_b = arch(B)
-    arch_g = arch(G)
-    @assert arch_a == arch_b == arch_g
+    backend = choose_backend(simple_update, parent(A), parent(B), parent(G))
 
     return simple_update(
-        arch_a,
+        backend,
         A,
         ind_physical_a,
         B,
@@ -45,7 +45,7 @@ function simple_update(
 end
 
 function simple_update(
-    ::CPU,
+    ::BackendCustom,
     A::Tensor,
     ind_physical_a::Index,
     B::Tensor,
@@ -102,7 +102,7 @@ end
 # TODO cache workspace memory
 # TODO do QR before SU to reduce computational cost on A,B with ninds > 3 but not when size(extent) ~ size(rest)
 function simple_update(
-    ::GPU,
+    ::BackendCuTensorNet,
     A::Tensor,
     ind_physical_a::Index,
     B::Tensor,

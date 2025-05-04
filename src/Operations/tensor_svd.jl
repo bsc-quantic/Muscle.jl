@@ -20,62 +20,42 @@ Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be speci
 function tensor_svd_thin end
 function tensor_svd_thin! end
 
-# dispatch to correct architecture
-tensor_svd_thin(A::Tensor; kwargs...) = tensor_svd_thin(arch(A), A; kwargs...)
+choose_backend_rule(::typeof(tensor_svd_thin), ::Type{<:Array}) = BackendBase()
+choose_backend_rule(::typeof(tensor_svd_thin), ::Type{<:CuArray}) = BackendCuTensorNet()
+choose_backend_rule(::typeof(tensor_svd_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
+choose_backend_rule(::typeof(tensor_svd_thin!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
 
-function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), kwargs...)
-    inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
-    left_extent = prod(Base.Fix1(size, A), inds_u)
-    right_extent = prod(Base.Fix1(size, A), inds_v)
-    s_extent = min(left_extent, right_extent)
+# function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), kwargs...)
+#     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
+#     left_extent = prod(Base.Fix1(size, A), inds_u)
+#     right_extent = prod(Base.Fix1(size, A), inds_v)
+#     s_extent = min(left_extent, right_extent)
 
-    U = Tensor(similar(parent(A), left_extent..., s_extent), [inds_u..., ind_s])
-    s = Tensor(similar(parent(A), s_extent), [ind_s])
-    V = Tensor(similar(parent(A), right_extent..., s_extent), [inds_v..., ind_s])
+#     U = Tensor(similar(parent(A), left_extent..., s_extent), [inds_u..., ind_s])
+#     s = Tensor(similar(parent(A), s_extent), [ind_s])
+#     V = Tensor(similar(parent(A), right_extent..., s_extent), [inds_v..., ind_s])
 
-    return U, s, V
-end
+#     return U, s, V
+# end
 
 # function tensor_svd_thin!(A::Tensor, U::Tensor, s::Tensor, V::Tensor; kwargs...)
 #     @argcheck arch(A) == arch(U) == arch(s) == arch(V)
 #     tensor_svd_thin!(arch(A), A, U, s, V; kwargs...)
 # end
 
-# CPU
-function tensor_svd_thin!(
-    ::CPU,
-    A::Tensor,
-    U::Tensor,
-    s::Tensor,
-    V::Tensor;
-    kwargs...
-)
-    @warn "tensor_svd_thing! on CPU does intermediate copying. Consider using `tensor_svd_thin`."
-
-    tmp_U, tmp_s, tmp_V = tensor_svd_thin(CPU(), parent(A), inds(A); kwargs...)
-
-    @argcheck arch(tmp_U) == arch(U)
-    @argcheck arch(tmp_s) == arch(s)
-    @argcheck arch(tmp_V) == arch(V)
-
-    @argcheck inds(tmp_U) == inds(U)
-    @argcheck inds(tmp_s) == inds(s)
-    @argcheck inds(tmp_V) == inds(V)
-
-    @argcheck size(tmp_U) == size(U)
-    @argcheck size(tmp_s) == size(s)
-    @argcheck size(tmp_V) == size(V)
-
-    copyto!(U, tmp_U)
-    copyto!(s, tmp_s)
-    copyto!(V, tmp_V)
-
-    return U, s, V
+function tensor_svd_thin(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:svd)), inplace=false, kwargs...)
+    backend = choose_backend(tensor_svd_thin, A)
+    return tensor_svd_thin(backend, A; inds_u, inds_v, ind_s, inplace, kwargs...)
 end
 
-# TODO use low-rank approximations
+function tensor_svd_thin!(Q::Tensor, R::Tensor, A::Tensor; kwargs...)
+    backend = choose_backend(tensor_svd_thin!, Q, R, A)
+    return tensor_svd_thin!(backend, Q, R, A; kwargs...)
+end
+
+## `Base`
 function tensor_svd_thin(
-    ::CPU,
+    ::BackendBase,
     A::Tensor;
     inds_u=(),
     inds_v=(),
@@ -109,32 +89,63 @@ function tensor_svd_thin(
     return U, s, Vt
 end
 
-# GPU - CUDA
-function tensor_svd_thin(arch::GPU, A::Tensor; kwargs...)
-    U, s, V = allocate_result(tensor_svd_thin, A; kwargs...)
-    tensor_svd_thin!(arch, A, U, s, V; kwargs...)
-end
-
 function tensor_svd_thin!(
-    ::GPU,
-    A::Tensor,
+    ::BackendBase,
     U::Tensor,
     s::Tensor,
-    V::Tensor;
+    V::Tensor,
+    A::Tensor;
     kwargs...
 )
-    tensor_svd_thin!(GPU(), parent(A), inds(A), U, inds(U), s, V, inds(V); kwargs...)
+    @warn "tensor_svd_thing! on BackendBase does intermediate copying. Consider using `tensor_svd_thin`."
+
+    tmp_U, tmp_s, tmp_V = tensor_svd_thin(BackendBase(), A; inds_u=inds(U), inds_v=inds(V), ind_s=only(inds(s)), kwargs...)
+
+    @argcheck arch(tmp_U) == arch(U)
+    @argcheck arch(tmp_s) == arch(s)
+    @argcheck arch(tmp_V) == arch(V)
+
+    @argcheck inds(tmp_U) == inds(U)
+    @argcheck inds(tmp_s) == inds(s)
+    @argcheck inds(tmp_V) == inds(V)
+
+    @argcheck size(tmp_U) == size(U)
+    @argcheck size(tmp_s) == size(s)
+    @argcheck size(tmp_V) == size(V)
+
+    copyto!(U, tmp_U)
+    copyto!(s, tmp_s)
+    copyto!(V, tmp_V)
+
+    return U, s, V
+end
+
+## `cuTensorNet`
+# function tensor_svd_thin(arch::GPU, A::Tensor; kwargs...)
+#     U, s, V = allocate_result(tensor_svd_thin, A; kwargs...)
+#     tensor_svd_thin!(arch, A, U, s, V; kwargs...)
+# end
+
+function tensor_svd_thin!(
+    ::BackendCuTensorNet,
+    U::Tensor,
+    s::Tensor,
+    V::Tensor,
+    A::Tensor;
+    kwargs...
+)
+    tensor_svd_thin!(BackendCuTensorNet(), parent(U), inds(U), parent(s), parent(V), inds(V), parent(A), inds(A); kwargs...)
 end
 
 function tensor_svd_thin!(
-    ::GPU,
-    A::AbstractArray,
-    inds_a,
-    U::AbstractArray,
+    ::BackendCuTensorNet,
+    U,
     inds_u,
-    s::AbstractArray,
-    V::AbstractArray,
-    inds_v;
+    s,
+    V,
+    inds_v,
+    A,
+    inds_a;
     kwargs...
 )
     modemap = Dict{Index,Int}(ind => i for (i, ind) in enumerate(unique(inds_a ∪ inds_u ∪ inds_v)))

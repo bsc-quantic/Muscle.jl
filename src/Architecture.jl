@@ -33,8 +33,27 @@ function promote_memspace(a, b)
     return a, b
 end
 
+# Base.promote_rule(::Type{CPUMemorySpace}, ::Type{CPUMemorySpace}) = CPUMemorySpace
+# Base.promote_rule(::Type{CPUMemorySpace}, ::Type{CUDAMemorySpace}) = CUDAMemorySpace
+# Base.promote_rule(::Type{CPUMemorySpace}, ::Type{ReactantMemorySpace}) = ReactantMemorySpace
+
+# promote_memspace(::A, ::B) where {A<:MemorySpace,B<:MemorySpace} = promote_type(A, B)()
+
+# promote_memspace(a, b, c, args...) = promote_memspace(promote_memspace(a, b), c, args...)
+# function promote_memspace(a::AbstractArray, b::AbstractArray)
+#     target_memspace = promote_memspace(memory_space(a), memory_space(b))
+#     return adapt_memspace(target_memspace, a), adapt_memspace(target_memspace, b)
+# end
+
+# # TODO promote_memspace for Tensor
+
+# adapt_memspace(::CPUMemorySpace, x::AbstractArray) = memory_space(x) != CPUMemorySpace() ? adapt(Array, x) : x
+# adapt_memspace(::CUDAMemorySpace, x::AbstractArray) = memory_space(x) != CUDAMemorySpace() ? adapt(CuArray, x) : x
+
 abstract type Backend end
 
+struct BackendBase <: Backend end
+struct BackendCustom <: Backend end
 struct BackendOMEinsum <: Backend end
 struct BackendCUDA <: Backend end
 struct BackendCuTENSOR <: Backend end
@@ -42,12 +61,28 @@ struct BackendCuTensorNet <: Backend end
 struct BackendReactant <: Backend end
 
 # set of loaded backends available for use
-const loaded_backends = Set{Backend}([BackendOMEinsum(), BackendCUDA()])
+const loaded_backends = Set{Backend}([
+    BackendBase(),
+    BackendOMEinsum(),
+    BackendCUDA(),
+    BackendCuTENSOR(),
+    BackendCuTensorNet(),
+])
 
 function choose_backend end
 function allowed_backends end
 
 # choose_backend(f::Function, arrays::AbstractArray...) = choose_backend(f, arrays...)
-choose_backend(f::Function, arrays::Tensor...) = choose_backend(f, parent.(arrays)...)
-choose_backend(arrays::AbstractArray...) = choose_backend(unwrap_type.(arrays)...)
+choose_backend(f::Function, tensors::Tensor...) = choose_backend(f, parent.(tensors)...)
+function choose_backend(f::Function, arrays::AbstractArray...)
+    if hasmethod(choose_backend_rule, Tuple{typeof(f),typeof.(arrays)...})
+        return choose_backend_rule(f, arrays...)
+    elseif hasmethod(choose_backend_rule, Tuple{typeof(f),[Type{typeof(A)} for A in arrays]...})
+        return choose_backend_rule(f, typeof.(arrays)...)
+    else
+        return choose_backend_rule(f, unwrap_type.(typeof.(arrays))...)
+    end
+end
+
+# choose_backend(arrays::AbstractArray...) = choose_backend(unwrap_type.(arrays)...)
 choose_backend(arrays...) = missing

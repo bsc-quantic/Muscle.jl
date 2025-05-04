@@ -20,11 +20,10 @@ Perform a unary tensor contraction operation on `a` and store the result in `c`.
 """
 function unary_einsum! end
 
-choose_backend(::typeof(unary_einsum), ::Array) = BackendOMEinsum()
-choose_backend(::typeof(unary_einsum), ::CuArray) = BackendOMEinsum()
-
-choose_backend(::typeof(unary_einsum!), ::Array, ::Array) = BackendOMEinsum()
-choose_backend(::typeof(unary_einsum!), ::CuArray, ::CuArray) = BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum), ::Type{<:Array}) = BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum), ::Type{<:CuArray}) = BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum!), ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendOMEinsum()
 
 function unary_einsum(x::Tensor; dims=nonunique(inds(x)), out=nothing)
     inds_sum = ∩(dims, inds(x))
