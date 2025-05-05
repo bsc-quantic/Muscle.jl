@@ -74,7 +74,7 @@ function binary_einsum(::BackendOMEinsum, inds_c, a, inds_a, b, inds_b)
         size_dict[ind] = ind_size
     end
 
-    c = OMEinsum.get_output_array((a, b), Int[size_dict[i] for i in inds_c]; fillzero=false)
+    c = OMEinsum.get_output_array((a, b), Int[size_dict[i] for i in inds_c], false)
     OMEinsum.einsum!((inds_a, inds_b), inds_c, (a, b), c, true, false, size_dict)
     return c
 end
