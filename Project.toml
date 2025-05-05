@@ -1,7 +1,7 @@
 name = "Muscle"
 uuid = "21fe5c4b-a943-414d-bf3e-516f24900631"
 authors = ["Sergio Sánchez Ramírez <sergio.sanchez.ramirez@bsc.es> and contributors"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
