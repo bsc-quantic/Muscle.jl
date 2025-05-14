@@ -18,14 +18,9 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://bsc-quantic.github.io/Muscle.jl",
         edit_link="master",
-        assets=String[]
+        assets=String[],
     ),
-    pages=[
-        "Home" => "index.md",
-    ]
+    pages=["Home" => "index.md"],
 )
 
-deploydocs(;
-    repo="github.com/bsc-quantic/Muscle.jl",
-    devbranch="master"
-)
+deploydocs(; repo="github.com/bsc-quantic/Muscle.jl", devbranch="master")

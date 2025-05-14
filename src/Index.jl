@@ -27,10 +27,7 @@ function findperm(from::AbstractVector{I}, to::AbstractVector{I}) where {I<:Inde
 end
 
 # required for `Tensor` constructor
-function Base.convert(
-    ::Type{ImmutableArray{Index,N}},
-    x::ImmutableArray{I,N},
-) where {I<:Index,N}
+function Base.convert(::Type{ImmutableArray{Index,N}}, x::ImmutableArray{I,N}) where {I<:Index,N}
     return ImmutableArray{Index,N}(x.data)
 end
 

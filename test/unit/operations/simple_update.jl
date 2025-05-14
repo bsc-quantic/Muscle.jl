@@ -10,35 +10,35 @@ using LinearAlgebra: LinearAlgebra
 
 op_identity = Tensor(
     reshape(Array{Float64}(LinearAlgebra.I(4)), 2, 2, 2, 2),
-    [
-        Index((; site=1, cut=1)),
-        Index((; site=2, cut=1)),
-        Index((; site=1, cut=2)),
-        Index((; site=2, cut=2)),
-    ],
+    [Index((; site=1, cut=1)), Index((; site=2, cut=1)), Index((; site=1, cut=2)), Index((; site=2, cut=2))],
 )
 
 op_cx = Tensor(
-    reshape([
-            1.0 0.0 0.0 0.0;
-            0.0 1.0 0.0 0.0;
-            0.0 0.0 0.0 1.0;
+    reshape(
+        [
+            1.0 0.0 0.0 0.0
+            0.0 1.0 0.0 0.0
+            0.0 0.0 0.0 1.0
             0.0 0.0 1.0 0.0
-        ], 2, 2, 2, 2),
-    [
-        Index((; site=1, cut=1)),
-        Index((; site=2, cut=1)),
-        Index((; site=1, cut=2)),
-        Index((; site=2, cut=2)),
-    ],
+        ],
+        2,
+        2,
+        2,
+        2,
+    ),
+    [Index((; site=1, cut=1)), Index((; site=2, cut=1)), Index((; site=1, cut=2)), Index((; site=2, cut=2))],
 )
 
 @testset "apply identity" begin
     U, s, V = Muscle.simple_update(
-        Γa, Index((; site=1, cut=1)),
-        Γb, Index((; site=2, cut=1)),
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
-        op_identity, Index((; site=1, cut=2)), Index((; site=2, cut=2))
+        op_identity,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2)),
     )
 
     @test U ≈ Γa
@@ -51,10 +51,14 @@ end
 
 @testset "apply cx" begin
     U, s, V = Muscle.simple_update(
-        Γa, Index((; site=1, cut=1)),
-        Γb, Index((; site=2, cut=1)),
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
-        op_cx, Index((; site=1, cut=2)), Index((; site=2, cut=2))
+        op_cx,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2)),
     )
 
     @test U ≈ Γa
@@ -67,10 +71,14 @@ end
 
 @testset "apply identity, normalize" begin
     U, s, V = Muscle.simple_update(
-        Γa, Index((; site=1, cut=1)),
-        Γb, Index((; site=2, cut=1)),
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
-        op_identity, Index((; site=1, cut=2)), Index((; site=2, cut=2));
+        op_identity,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2));
         normalize=true,
     )
 
@@ -84,11 +92,15 @@ end
 
 @testset "apply cx, normalize" begin
     U, s, V = Muscle.simple_update(
-        Γa, Index((; site=1, cut=1)),
-        Γb, Index((; site=2, cut=1)),
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
-        op_cx, Index((; site=1, cut=2)), Index((; site=2, cut=2));
-        normalize=true
+        op_cx,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2));
+        normalize=true,
     )
 
     @test U ≈ Γa
@@ -101,28 +113,36 @@ end
 
 @testset "apply identity, truncate to χ=1" begin
     U, s, V = Muscle.simple_update(
-        Γa, Index((; site=1, cut=1)),
-        Γb, Index((; site=2, cut=1)),
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
-        op_identity, Index((; site=1, cut=2)), Index((; site=2, cut=2));
+        op_identity,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2));
         maxdim=1,
     )
 
-    @test U ≈ @view Γa[Index((; bond=(1, 2)))=>1:1]
-    @test V ≈ @view Γb[Index((; bond=(1, 2)))=>1:1]
+    @test U ≈ @view Γa[Index((; bond=(1, 2))) => 1:1]
+    @test V ≈ @view Γb[Index((; bond=(1, 2))) => 1:1]
     @test s ≈ Tensor([1], [Index((; bond=(1, 2)))])
 end
 
 @testset "apply cx, truncate to χ=1" begin
     U, s, V = Muscle.simple_update(
-        Γa, Index((; site=1, cut=1)),
-        Γb, Index((; site=2, cut=1)),
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
         Index((; bond=(1, 2))),
-        op_cx, Index((; site=1, cut=2)), Index((; site=2, cut=2));
+        op_cx,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2));
         maxdim=1,
     )
 
-    @test U ≈ @view Γa[Index((; bond=(1, 2)))=>1:1]
+    @test U ≈ @view Γa[Index((; bond=(1, 2))) => 1:1]
     @test V ≈ Tensor(1 / √2 * [1; 1;;], [Index((; site=2, cut=1)), Index((; bond=(1, 2)))])
     @test size(V, Index((; bond=(1, 2)))) == 1
     @test s ≈ Tensor([√2], [Index((; bond=(1, 2)))])

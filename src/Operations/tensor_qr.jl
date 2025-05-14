@@ -22,7 +22,9 @@ function tensor_qr_thin! end
 choose_backend_rule(::typeof(tensor_qr_thin), ::Type{<:Array}) = BackendBase()
 choose_backend_rule(::typeof(tensor_qr_thin), ::Type{<:CuArray}) = BackendCuTensorNet()
 choose_backend_rule(::typeof(tensor_qr_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(tensor_qr_thin!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
+function choose_backend_rule(::typeof(tensor_qr_thin!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray})
+    BackendCuTensorNet()
+end
 
 function tensor_qr_thin(A::Tensor; inds_q=(), inds_r=(), ind_virtual=Index(gensym(:qr)), inplace=false, kwargs...)
     backend = choose_backend(tensor_qr_thin, A)
@@ -36,16 +38,9 @@ end
 
 ## `Base`
 function tensor_qr_thin(
-    ::BackendBase,
-    A;
-    inds_q=(),
-    inds_r=(),
-    ind_virtual=Index(gensym(:qr)),
-    inplace=false,
-    kwargs...,
+    ::BackendBase, A; inds_q=(), inds_r=(), ind_virtual=Index(gensym(:qr)), inplace=false, kwargs...
 )
-    ind_virtual ∉ inds(A) ||
-        throw(ArgumentError("new virtual bond name ($ind_virtual) cannot be already be present"))
+    ind_virtual ∉ inds(A) || throw(ArgumentError("new virtual bond name ($ind_virtual) cannot be already be present"))
 
     inds_q, inds_r = factorinds(inds(A), inds_q, inds_r)
     @argcheck issetequal(inds_q ∪ inds_r, inds(A))
@@ -67,16 +62,12 @@ function tensor_qr_thin(
     return Q, R
 end
 
-function tensor_qr_thin!(
-    ::BackendBase,
-    Q::Tensor,
-    R::Tensor,
-    A::Tensor;
-    kwargs...
-)
+function tensor_qr_thin!(::BackendBase, Q::Tensor, R::Tensor, A::Tensor; kwargs...)
     @warn "tensor_qr_thin! on BackendBase does intermediate copying. Consider using `tensor_qr_thin`."
 
-    tmp_Q, tmp_R = tensor_qr_thin(BackendBase(), A; inds_q=setdiff(inds(Q), inds(R)), inds_r=setdiff(inds(R), inds(Q)), kwargs...)
+    tmp_Q, tmp_R = tensor_qr_thin(
+        BackendBase(), A; inds_q=setdiff(inds(Q), inds(R)), inds_r=setdiff(inds(R), inds(Q)), kwargs...
+    )
 
     @argcheck arch(tmp_Q) == arch(Q)
     @argcheck arch(tmp_R) == arch(R)
@@ -98,16 +89,7 @@ function tensor_qr_thin!(::BackendCuTensorNet, Q::Tensor, R::Tensor, A::Tensor; 
     return tensor_qr_thin!(BackendCuTensorNet(), parent(Q), inds(Q), parent(R), inds(R), parent(A), inds(A); kwargs...)
 end
 
-function tensor_qr_thin!(
-    ::BackendCuTensorNet,
-    Q,
-    inds_q,
-    R,
-    inds_r,
-    A,
-    inds_a;
-    kwargs...
-)
+function tensor_qr_thin!(::BackendCuTensorNet, Q, inds_q, R, inds_r, A, inds_a; kwargs...)
     modemap = Dict(ind => i for (i, ind) in enumerate(unique(inds_a ∪ inds_q ∪ inds_r)))
     modes_a = [modemap[ind] for ind in inds(A)]
     modes_q = [modemap[ind] for ind in inds(U)]
