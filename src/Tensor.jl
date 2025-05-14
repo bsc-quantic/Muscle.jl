@@ -12,19 +12,32 @@ struct Tensor{T,N,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
     data::A
     inds::ImmutableVector{Index}
 
-    function Tensor(data::A, inds::ImmutableVector{I}) where {T,N,A<:AbstractArray{T,N},I<:Index}
+    function Tensor(
+        data::A,
+        inds::ImmutableVector{I},
+    ) where {T,N,A<:AbstractArray{T,N},I<:Index}
         if length(inds) != N
-            throw(ArgumentError("ndims(data) [$(ndims(data))] must be equal to length(inds) [$(length(inds))]"))
+            throw(
+                ArgumentError(
+                    "ndims(data) [$(ndims(data))] must be equal to length(inds) [$(length(inds))]",
+                ),
+            )
         end
 
-        if !all(i -> allequal(Iterators.map(dim -> size(data, dim), findall(==(i), inds))), nonunique(inds))
+        if !all(
+            i -> allequal(Iterators.map(dim -> size(data, dim), findall(==(i), inds))),
+            nonunique(inds),
+        )
             throw(DimensionMismatch("nonuniform size of repeated indices"))
         end
 
         return new{T,N,A}(data, inds)
     end
 
-    function Tensor(data::A, inds::AbstractVector{I}) where {T,N,A<:AbstractArray{T,N},I<:Index}
+    function Tensor(
+        data::A,
+        inds::AbstractVector{I},
+    ) where {T,N,A<:AbstractArray{T,N},I<:Index}
         return Tensor(data, ImmutableVector(inds))
     end
 end
@@ -37,10 +50,12 @@ end
 
 Construct a tensor with the given data and indices.
 """
-Tensor(data::A, inds::NTuple{N}) where {T,N,A<:AbstractArray{T,N}} = Tensor{T,N,A}(data, collect(inds))
+Tensor(data::A, inds::NTuple{N}) where {T,N,A<:AbstractArray{T,N}} =
+    Tensor{T,N,A}(data, collect(inds))
 Tensor(data::AbstractArray{T,0}) where {T} = Tensor(data, Index[])
 Tensor(data::Number) = Tensor(fill(data))
-Tensor{T,N,A}(data::A, inds::AbstractVector) where {T,N,A<:AbstractArray{T,N}} = Tensor(data, ImmutableVector(inds))
+Tensor{T,N,A}(data::A, inds::AbstractVector) where {T,N,A<:AbstractArray{T,N}} =
+    Tensor(data, ImmutableVector(inds))
 
 # useful methods
 Tensor(data::AbstractArray, inds::Vector{Symbol}) = Tensor(data, map(Index, inds))
@@ -50,7 +65,8 @@ end
 
 inds(x::Tensor) = x.inds
 
-Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
+Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} =
+    Tensor(copy(parent(t)), copy(inds(t)))
 Adapt.adapt_structure(to, x::Tensor) = Tensor(adapt(to, parent(x)), inds(x))
 
 """
@@ -58,15 +74,21 @@ Adapt.adapt_structure(to, x::Tensor) = Tensor(adapt(to, parent(x)), inds(x))
 
 Return a uninitialize tensor of the same size, eltype and [`inds`](@ref) as `tensor`. If `S` is provided, the eltype of the tensor will be `S`. If `dims` is provided, the size of the tensor will be `dims`.
 """
-Base.similar(t::Tensor; inds=inds(t)) = Tensor(similar(parent(t)), inds)
-Base.similar(t::Tensor, S::Type; inds=inds(t)) = Tensor(similar(parent(t), S), inds)
-function Base.similar(t::Tensor{T,N}, S::Type, dims::Base.Dims{N}; inds=inds(t)) where {T,N}
+Base.similar(t::Tensor; inds = inds(t)) = Tensor(similar(parent(t)), inds)
+Base.similar(t::Tensor, S::Type; inds = inds(t)) = Tensor(similar(parent(t), S), inds)
+function Base.similar(
+    t::Tensor{T,N},
+    S::Type,
+    dims::Base.Dims{N};
+    inds = inds(t),
+) where {T,N}
     return Tensor(similar(parent(t), S, dims), inds)
 end
 function Base.similar(t::Tensor, ::Type, dims::Base.Dims{N}; kwargs...) where {N}
     throw(DimensionMismatch("`dims` needs to be of length $(ndims(t))"))
 end
-Base.similar(t::Tensor{T,N}, dims::Base.Dims{N}; inds=inds(t)) where {T,N} = Tensor(similar(parent(t), dims), inds)
+Base.similar(t::Tensor{T,N}, dims::Base.Dims{N}; inds = inds(t)) where {T,N} =
+    Tensor(similar(parent(t), dims), inds)
 function Base.similar(t::Tensor, dims::Base.Dims{N}; kwargs...) where {N}
     throw(DimensionMismatch("`dims` needs to be of length $(ndims(t))"))
 end
@@ -101,7 +123,8 @@ end
 
 Base.isapprox(a::Tensor{T,0}, b::T; kwargs...) where {T} = isapprox(only(a), b; kwargs...)
 Base.isapprox(a::T, b::Tensor{T,0}; kwargs...) where {T} = isapprox(b, a; kwargs...)
-Base.isapprox(a::Tensor{A,0}, b::Tensor{B,0}; kwargs...) where {A,B} = isapprox(only(a), only(b); kwargs...)
+Base.isapprox(a::Tensor{A,0}, b::Tensor{B,0}; kwargs...) where {A,B} =
+    isapprox(only(a), only(b); kwargs...)
 
 # NOTE: `replace` does not currenly support cyclic replacements
 """
@@ -113,7 +136,8 @@ Replace the indices of the tensor according to the given pairs of old and new in
 
     This method does not support cyclic replacements.
 """
-Base.replace(t::Tensor, old_new::P...) where {P<:Base.Pair} = Tensor(parent(t), replace(inds(t), old_new...))
+Base.replace(t::Tensor, old_new::P...) where {P<:Base.Pair} =
+    Tensor(parent(t), replace(inds(t), old_new...))
 
 """
     Base.parent(::Tensor)
@@ -204,14 +228,18 @@ Base.stride(t::Tensor, i) = stride(parent(t), dim(t, i))
 # fix ambiguity
 Base.stride(t::Tensor, i::Integer) = stride(parent(t), i)
 
-Base.unsafe_convert(::Type{Ptr{T}}, t::Tensor{T}) where {T} = Base.unsafe_convert(Ptr{T}, parent(t))
+Base.unsafe_convert(::Type{Ptr{T}}, t::Tensor{T}) where {T} =
+    Base.unsafe_convert(Ptr{T}, parent(t))
 
 Base.elsize(T::Type{<:Tensor}) = Base.elsize(parent_type(T))
 
 # Broadcasting
 Base.BroadcastStyle(::Type{T}) where {T<:Tensor} = ArrayStyle{T}()
 
-function Base.similar(bc::Broadcasted{ArrayStyle{Tensor{T,N,A}}}, ::Type{ElType}) where {T,N,A,ElType}
+function Base.similar(
+    bc::Broadcasted{ArrayStyle{Tensor{T,N,A}}},
+    ::Type{ElType},
+) where {T,N,A,ElType}
     # NOTE already checked if dimension mismatch
     # TODO throw on label mismatch?
     tensor = first(arg for arg in bc.args if arg isa Tensor{T,N,A})
@@ -244,8 +272,10 @@ Base.selectdim(t::Tensor, d, i) = selectdim(t, dim(t, d), i)
 
 Permute the dimensions of `tensor` according to the given permutation `perm`. The [`inds`](@ref) will be permuted accordingly.
 """
-Base.permutedims(t::Tensor, perm) = Tensor(permutedims(parent(t), perm), getindex.((inds(t),), perm))
-Base.permutedims!(dest::Tensor, src::Tensor, perm) = permutedims!(parent(dest), parent(src), perm)
+Base.permutedims(t::Tensor, perm) =
+    Tensor(permutedims(parent(t), perm), getindex.((inds(t),), perm))
+Base.permutedims!(dest::Tensor, src::Tensor, perm) =
+    permutedims!(parent(dest), parent(src), perm)
 
 function Base.permutedims(t::Tensor{T}, perm::Base.AbstractVecOrTuple{Index}) where {T}
     perm = map(i -> findfirst(==(i), inds(t)), perm)
@@ -257,7 +287,7 @@ end
 
 Return a tensor where the dimensions specified by `dims` are removed. `size(tensor, dim) == 1` for each dimension in `dims`.
 """
-function Base.dropdims(t::Tensor; dims=tuple(findall(==(1), size(t))...))
+function Base.dropdims(t::Tensor; dims = tuple(findall(==(1), size(t))...))
     return Tensor(dropdims(parent(t); dims), inds(t)[setdiff(1:ndims(t), dims)])
 end
 
@@ -272,7 +302,10 @@ Return a view of the tensor with the given indices. If a `Pair` is given, the in
     This method doesn't return a `SubArray`, but a `Tensor` wrapping a `SubArray`.
 """
 function Base.view(t::Tensor, i...)
-    return Tensor(view(parent(t), i...), [label for (label, j) in zip(inds(t), i) if !(j isa Integer)])
+    return Tensor(
+        view(parent(t), i...),
+        [label for (label, j) in zip(inds(t), i) if !(j isa Integer)],
+    )
 end
 
 function Base.view(t::Tensor, indices::P...) where {I<:Index,P<:Base.Pair{I}}
@@ -282,7 +315,8 @@ function Base.view(t::Tensor, indices::P...) where {I<:Index,P<:Base.Pair{I}}
     end
 
     let data = view(parent(t), indices...),
-        indices = [label for (index, label) in zip(indices, inds(t)) if !(index isa Integer)]
+        indices =
+            [label for (index, label) in zip(indices, inds(t)) if !(index isa Integer)]
 
         Tensor(data, indices)
     end
@@ -310,7 +344,8 @@ Base.adjoint(t::Tensor) = conj(t)
 
 # NOTE: Maybe use transpose for lazy transposition ?
 Base.transpose(t::Tensor{T,1,A}) where {T,A<:AbstractArray{T,1}} = copy(t)
-Base.transpose(t::Tensor{T,2,A}) where {T,A<:AbstractArray{T,2}} = Tensor(transpose(parent(t)), reverse(inds(t)))
+Base.transpose(t::Tensor{T,2,A}) where {T,A<:AbstractArray{T,2}} =
+    Tensor(transpose(parent(t)), reverse(inds(t)))
 
 """
     expand(tensor::Tensor; label[, axis=1, size=1, method=:zeros])
@@ -318,7 +353,7 @@ Base.transpose(t::Tensor{T,2,A}) where {T,A<:AbstractArray{T,2}} = Tensor(transp
 Expand the tensor by adding a new dimension `label` with the given `size` at the specified `axis`.
 Currently the supported methods are `:zeros` and `:repeat`.
 """
-function expand(tensor::Tensor; label, axis=1, size=1, method=:zeros)
+function expand(tensor::Tensor; label, axis = 1, size = 1, method = :zeros)
     array = parent(tensor)
     data = if size == 1
         reshape(array, Base.size(array)[1:(axis-1)]..., 1, Base.size(array)[axis:end]...)
@@ -337,7 +372,12 @@ function expand(tensor::Tensor; label, axis=1, size=1, method=:zeros)
 end
 
 function expand_zeros(array, axis, size)
-    new = zeros(eltype(array), Base.size(array)[1:(axis-1)]..., size, Base.size(array)[axis:end]...)
+    new = zeros(
+        eltype(array),
+        Base.size(array)[1:(axis-1)]...,
+        size,
+        Base.size(array)[axis:end]...,
+    )
 
     view = selectdim(new, axis, 1)
     copy!(view, array)
@@ -348,7 +388,7 @@ end
 function expand_repeat(array, axis, size)
     return repeat(
         reshape(array, Base.size(array)[1:(axis-1)]..., 1, Base.size(array)[axis:end]...);
-        outer=(fill(1, axis - 1)..., size, fill(1, ndims(array) - axis + 1)...),
+        outer = (fill(1, axis - 1)..., size, fill(1, ndims(array) - axis + 1)...),
     )
 end
 
@@ -360,7 +400,7 @@ LinearAlgebra.opnorm(x::Tensor, p::Real) = opnorm(parent(x), p)
 
 Fuses `parinds`, leaves them on the right-side internally permuted with `permutator` and names it as `ind`.
 """
-function fuse(tensor::Tensor, parinds; ind=first(parinds))
+function fuse(tensor::Tensor, parinds; ind = first(parinds))
     @assert allunique(inds(tensor))
     @assert parinds ⊆ inds(tensor)
 

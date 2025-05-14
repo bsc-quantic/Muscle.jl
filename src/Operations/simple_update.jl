@@ -5,8 +5,18 @@ using cuTensorNet: cuTensorNet
 function simple_update end
 function simple_update! end
 
-choose_backend_rule(::typeof(simple_update), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendCustom()
-choose_backend_rule(::typeof(simple_update), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
+choose_backend_rule(
+    ::typeof(simple_update),
+    ::Type{<:Array},
+    ::Type{<:Array},
+    ::Type{<:Array},
+) = BackendCustom()
+choose_backend_rule(
+    ::typeof(simple_update),
+    ::Type{<:CuArray},
+    ::Type{<:CuArray},
+    ::Type{<:CuArray},
+) = BackendCuTensorNet()
 
 # absorb behavior trait
 # used to keep type-inference happy (`DontAbsorb` returns 3 tensors, while the rest return 2)
@@ -54,16 +64,16 @@ function simple_update(
     G::Tensor,
     ind_physical_g_a::Index,
     ind_physical_g_b::Index;
-    normalize::Bool=false,
-    absorb::AbsorbBehavior=DontAbsorb(),
-    atol::Float64=0.0,
-    rtol::Float64=0.0,
-    maxdim=nothing,
+    normalize::Bool = false,
+    absorb::AbsorbBehavior = DontAbsorb(),
+    atol::Float64 = 0.0,
+    rtol::Float64 = 0.0,
+    maxdim = nothing,
 )
     Θ = Muscle.binary_einsum(
-        Muscle.binary_einsum(A, B; dims=[ind_bond_ab]),
+        Muscle.binary_einsum(A, B; dims = [ind_bond_ab]),
         G;
-        dims=[ind_physical_a, ind_physical_b],
+        dims = [ind_physical_a, ind_physical_b],
     )
     Θ = replace(Θ, ind_physical_g_a => ind_physical_a, ind_physical_g_b => ind_physical_b)
 
@@ -85,13 +95,13 @@ function simple_update(
     if absorb isa DontAbsorb
         return U, S, V
     elseif absorb isa AbsorbU
-        U = Muscle.binary_einsum(U, S; dims=[])
+        U = Muscle.binary_einsum(U, S; dims = [])
     elseif absorb isa AbsorbV
-        V = Muscle.binary_einsum(V, S; dims=[])
+        V = Muscle.binary_einsum(V, S; dims = [])
     elseif absorb isa AbsorbEqually
         S_sqrt = sqrt.(S)
-        U = Muscle.binary_einsum(U, S_sqrt; dims=[])
-        V = Muscle.binary_einsum(V, S_sqrt; dims=[])
+        U = Muscle.binary_einsum(U, S_sqrt; dims = [])
+        V = Muscle.binary_einsum(V, S_sqrt; dims = [])
     end
 
     return U, V
@@ -111,11 +121,11 @@ function simple_update(
     G::Tensor,
     ind_physical_g_a::Index,
     ind_physical_g_b::Index;
-    normalize::Bool=false,
-    absorb::AbsorbBehavior=DontAbsorb(),
-    atol::Float64=0.0,
-    rtol::Float64=0.0,
-    maxdim=nothing,
+    normalize::Bool = false,
+    absorb::AbsorbBehavior = DontAbsorb(),
+    atol::Float64 = 0.0,
+    rtol::Float64 = 0.0,
+    maxdim = nothing,
 )
     all_inds = unique(∪(inds(A), inds(B), inds(G)))
     modes_a = Int[findfirst(==(i), all_inds) for i in inds(A)]
@@ -123,7 +133,8 @@ function simple_update(
     modes_g = Int[findfirst(==(i), all_inds) for i in inds(G)]
 
     # TODO implement maxdim for simple_update on GPU (i think we just need to correctly size U and V beforehand)
-    !isnothing(maxdim) && error("simple_update with maxdim kwarg not yet implemented for GPU")
+    !isnothing(maxdim) &&
+        error("simple_update with maxdim kwarg not yet implemented for GPU")
 
     U = similar(A)
     V = similar(B)
@@ -136,9 +147,9 @@ function simple_update(
     modes_v = Int[findfirst(==(i), all_inds) for i in inds(V)]
 
     svd_config = cuTensorNet.SVDConfig(;
-        abs_cutoff=atol,
-        rel_cutoff=rtol,
-        s_partition=if absorb isa DontAbsorb
+        abs_cutoff = atol,
+        rel_cutoff = rtol,
+        s_partition = if absorb isa DontAbsorb
             cuTensorNet.CUTENSORNET_TENSOR_SVD_PARTITION_NONE
         elseif absorb isa AbsorbU
             cuTensorNet.CUTENSORNET_TENSOR_SVD_PARTITION_US
@@ -149,7 +160,7 @@ function simple_update(
         else
             throw(ArgumentError("Unknown value for absorb: $absorb"))
         end,
-        s_normalization=if normalize
+        s_normalization = if normalize
             cuTensorNet.CUTENSORNET_TENSOR_SVD_NORMALIZATION_L2
         else
             cuTensorNet.CUTENSORNET_TENSOR_SVD_NORMALIZATION_NONE

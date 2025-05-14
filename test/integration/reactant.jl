@@ -39,7 +39,7 @@ end
         end
 
         @testset "with permutation" begin
-            f(a, b) = binary_einsum(a, b; out=Index.([:k, :i]))
+            f(a, b) = binary_einsum(a, b; out = Index.([:k, :i]))
             C = f(A, B)
             Cre = @jit f(Are, Bre)
             @test Cre ≈ C
@@ -82,14 +82,14 @@ end
         Bre = adapt(ConcreteRArray, B)
 
         # binary_einsumion of all common indices
-        f1(a, b) = binary_einsum(a, b; dims=[Index(:j), Index(:k)])
+        f1(a, b) = binary_einsum(a, b; dims = [Index(:j), Index(:k)])
         C = f1(A, B)
         Cre = @jit f1(Are, Bre)
 
         @test Cre ≈ C
 
         # binary_einsumion of not all common indices
-        f2(a, b) = binary_einsum(a, b; dims=[Index(:j)])
+        f2(a, b) = binary_einsum(a, b; dims = [Index(:j)])
         C = f2(A, B)
         Cre = @jit f2(Are, Bre)
 
@@ -107,7 +107,8 @@ end
         Cre = adapt(ConcreteRArray, C)
         Dre = adapt(ConcreteRArray, D)
 
-        f3(a, b, c, d) = binary_einsum(binary_einsum(a, b), binary_einsum(c, d; dims=[Index(:m)]))
+        f3(a, b, c, d) =
+            binary_einsum(binary_einsum(a, b), binary_einsum(c, d; dims = [Index(:m)]))
 
         X = f3(A, B, C, D)
         Xre = @jit f3(Are, Bre, Cre, Dre)

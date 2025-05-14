@@ -22,10 +22,12 @@ function unary_einsum! end
 
 choose_backend_rule(::typeof(unary_einsum), ::Type{<:Array}) = BackendOMEinsum()
 choose_backend_rule(::typeof(unary_einsum), ::Type{<:CuArray}) = BackendOMEinsum()
-choose_backend_rule(::typeof(unary_einsum!), ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(unary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum!), ::Type{<:Array}, ::Type{<:Array}) =
+    BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) =
+    BackendOMEinsum()
 
-function unary_einsum(x::Tensor; dims=nonunique(inds(x)), out=nothing)
+function unary_einsum(x::Tensor; dims = nonunique(inds(x)), out = nothing)
     inds_sum = ∩(dims, inds(x))
     inds_y = if isnothing(out)
         setdiff(inds(x), inds_sum isa Base.AbstractVecOrTuple ? inds_sum : [inds_sum])

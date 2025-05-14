@@ -23,12 +23,24 @@ Perform a binary tensor contraction operation between `a` and `b` and store the 
 function binary_einsum! end
 
 # TODO add a preference system for some backends
-choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
+choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array}) =
+    BackendOMEinsum()
+choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) =
+    BackendCuTensorNet()
+choose_backend_rule(
+    ::typeof(binary_einsum!),
+    ::Type{<:Array},
+    ::Type{<:Array},
+    ::Type{<:Array},
+) = BackendOMEinsum()
+choose_backend_rule(
+    ::typeof(binary_einsum!),
+    ::Type{<:CuArray},
+    ::Type{<:CuArray},
+    ::Type{<:CuArray},
+) = BackendCuTensorNet()
 
-function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=nothing)
+function binary_einsum(a::Tensor, b::Tensor; dims = (∩(inds(a), inds(b))), out = nothing)
     inds_sum = ∩(dims, inds(a), inds(b))
 
     inds_c = if isnothing(out)
@@ -116,7 +128,21 @@ function binary_einsum!(::BackendCuTENSOR, c, inds_c, a, inds_a, b, inds_b; kwar
     op_b = cuTENSOR.OP_IDENTITY
     op_c = cuTENSOR.OP_IDENTITY
     op_out = cuTENSOR.OP_IDENTITY
-    cuTENSOR.contract!(α, parent(a), inds_a, op_a, parent(b), inds_b, op_b, β, parent(c), inds_c, op_c, op_out; kwargs...)
+    cuTENSOR.contract!(
+        α,
+        parent(a),
+        inds_a,
+        op_a,
+        parent(b),
+        inds_b,
+        op_b,
+        β,
+        parent(c),
+        inds_c,
+        op_c,
+        op_out;
+        kwargs...,
+    )
 
     return c
 end

@@ -77,7 +77,10 @@ choose_backend(f::Function, tensors::Tensor...) = choose_backend(f, parent.(tens
 function choose_backend(f::Function, arrays::AbstractArray...)
     if hasmethod(choose_backend_rule, Tuple{typeof(f),typeof.(arrays)...})
         return choose_backend_rule(f, arrays...)
-    elseif hasmethod(choose_backend_rule, Tuple{typeof(f),[Type{typeof(A)} for A in arrays]...})
+    elseif hasmethod(
+        choose_backend_rule,
+        Tuple{typeof(f),[Type{typeof(A)} for A in arrays]...},
+    )
         return choose_backend_rule(f, typeof.(arrays)...)
     else
         return choose_backend_rule(f, unwrap_type.(typeof.(arrays))...)

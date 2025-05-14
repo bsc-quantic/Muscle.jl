@@ -35,8 +35,9 @@ function Base.convert(
 end
 
 function factorinds(all_inds, left_inds, right_inds)
-    isdisjoint(left_inds, right_inds) ||
-        throw(ArgumentError("left ($left_inds) and right $(right_inds) indices must be disjoint"))
+    isdisjoint(left_inds, right_inds) || throw(
+        ArgumentError("left ($left_inds) and right $(right_inds) indices must be disjoint"),
+    )
 
     left_inds, right_inds = if isempty(left_inds)
         (setdiff(all_inds, right_inds), right_inds)
@@ -46,8 +47,10 @@ function factorinds(all_inds, left_inds, right_inds)
         (left_inds, right_inds)
     end
 
-    all(!isempty, (left_inds, right_inds)) || throw(ArgumentError("no right-indices left in factorization"))
-    all(∈(all_inds), left_inds ∪ right_inds) || throw(ArgumentError("indices must be in $(all_inds)"))
+    all(!isempty, (left_inds, right_inds)) ||
+        throw(ArgumentError("no right-indices left in factorization"))
+    all(∈(all_inds), left_inds ∪ right_inds) ||
+        throw(ArgumentError("indices must be in $(all_inds)"))
 
     return left_inds, right_inds
 end

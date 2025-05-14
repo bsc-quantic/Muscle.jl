@@ -99,7 +99,8 @@ end
     @test parent(similar(tensor)) !== parent(tensor)
     @test inds(similar(tensor)) == inds(tensor)
 
-    @test inds(similar(tensor; inds=[Index(:a), Index(:b), Index(:c)])) == [Index(:a), Index(:b), Index(:c)]
+    @test inds(similar(tensor; inds = [Index(:a), Index(:b), Index(:c)])) ==
+          [Index(:a), Index(:b), Index(:c)]
 
     @test eltype(similar(tensor, Bool)) == Bool
     @test size(similar(tensor, Bool)) == size(tensor)
@@ -132,7 +133,8 @@ end
 
 @testset "unsafe_convert" begin
     tensor = Tensor(zeros(2, 2, 2), [Index(:i), Index(:j), Index(:k)])
-    @test Base.unsafe_convert(Ptr{Float64}, tensor) == Base.unsafe_convert(Ptr{Float64}, parent(tensor))
+    @test Base.unsafe_convert(Ptr{Float64}, tensor) ==
+          Base.unsafe_convert(Ptr{Float64}, parent(tensor))
 end
 
 @testset "Indexing" begin
@@ -176,14 +178,14 @@ end
 
     @test firstindex(tensor) == 1
     @test lastindex(tensor) == 8
-    @test all(firstindex(tensor, i) == 1 for i in 1:ndims(tensor))
-    @test all(lastindex(tensor, i) == 2 for i in 1:ndims(tensor))
+    @test all(firstindex(tensor, i) == 1 for i = 1:ndims(tensor))
+    @test all(lastindex(tensor, i) == 2 for i = 1:ndims(tensor))
 
     @test axes(tensor) == axes(data)
     @test first(tensor) == first(data)
     @test last(tensor) == last(data)
     @test tensor[1, :, 2] == data[1, :, 2]
-    @test tensor[i=1, k=2] == data[1, :, 2]
+    @test tensor[i = 1, k = 2] == data[1, :, 2]
 
     tensor[1] = 0
     @test tensor[1] == data[1]
@@ -204,11 +206,39 @@ end
 
 @testset "Base.replace" begin
     tensor = Tensor(zeros(2, 2, 2), [Index(:i), Index(:j), Index(:k)])
-    @test inds(replace(tensor, Index(:i) => Index(:u), Index(:j) => Index(:v), Index(:k) => Index(:w))) == [Index(:u), Index(:v), Index(:w)]
-    @test parent(replace(tensor, Index(:i) => Index(:u), Index(:j) => Index(:v), Index(:k) => Index(:w))) === parent(tensor)
+    @test inds(
+        replace(
+            tensor,
+            Index(:i) => Index(:u),
+            Index(:j) => Index(:v),
+            Index(:k) => Index(:w),
+        ),
+    ) == [Index(:u), Index(:v), Index(:w)]
+    @test parent(
+        replace(
+            tensor,
+            Index(:i) => Index(:u),
+            Index(:j) => Index(:v),
+            Index(:k) => Index(:w),
+        ),
+    ) === parent(tensor)
 
-    @test inds(replace(tensor, Index(:a) => Index(:u), Index(:b) => Index(:v), Index(:c) => Index(:w))) == [Index(:i), Index(:j), Index(:k)]
-    @test parent(replace(tensor, Index(:a) => Index(:u), Index(:b) => Index(:v), Index(:c) => Index(:w))) === parent(tensor)
+    @test inds(
+        replace(
+            tensor,
+            Index(:a) => Index(:u),
+            Index(:b) => Index(:v),
+            Index(:c) => Index(:w),
+        ),
+    ) == [Index(:i), Index(:j), Index(:k)]
+    @test parent(
+        replace(
+            tensor,
+            Index(:a) => Index(:u),
+            Index(:b) => Index(:v),
+            Index(:c) => Index(:w),
+        ),
+    ) === parent(tensor)
 end
 
 @testset "dim" begin
@@ -245,7 +275,10 @@ end
     @test parent(selectdim(tensor, Index(:i), 1)) == selectdim(data, 1, 1)
     @test parent(selectdim(tensor, Index(:j), 2)) == selectdim(data, 2, 2)
     @test issetequal(inds(selectdim(tensor, Index(:i), 1)), [Index(:j), Index(:k)])
-    @test issetequal(inds(selectdim(tensor, Index(:i), 1:1)), [Index(:i), Index(:j), Index(:k)])
+    @test issetequal(
+        inds(selectdim(tensor, Index(:i), 1:1)),
+        [Index(:i), Index(:j), Index(:k)],
+    )
 end
 
 @testset "view" begin
@@ -327,26 +360,26 @@ end
     data = rand(2, 2, 2)
     tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1)
+    let new = Muscle.expand(tensor; label = Index(:x), axis = 1)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 1
         @test selectdim(new, Index(:x), 1) == tensor
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=3)
+    let new = Muscle.expand(tensor; label = Index(:x), axis = 3)
         @test inds(new) == [Index(:i), Index(:j), Index(:x), Index(:k)]
         @test size(new, Index(:x)) == 1
         @test selectdim(new, Index(:x), 1) == tensor
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1, size=2, method=:zeros)
+    let new = Muscle.expand(tensor; label = Index(:x), axis = 1, size = 2, method = :zeros)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 2
         @test selectdim(new, Index(:x), 1) == tensor
         @test selectdim(new, Index(:x), 2) == Tensor(zeros(size(data)...), inds(tensor))
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1, size=2, method=:repeat)
+    let new = Muscle.expand(tensor; label = Index(:x), axis = 1, size = 2, method = :repeat)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 2
         @test selectdim(new, Index(:x), 1) == tensor

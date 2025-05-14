@@ -17,7 +17,9 @@ end
 
 # NOTE `@generated` is used for manual loop unrolling
 @generated function __blocktranspose_block_transpose!(B::MMatrix{N,N}) where {N}
-    swaps = map(Iterators.filter(splat(>), Iterators.map(Tuple, Iterators.product(1:N, 1:N)))) do (i, j)
+    swaps = map(
+        Iterators.filter(splat(>), Iterators.map(Tuple, Iterators.product(1:N, 1:N))),
+    ) do (i, j)
         quote
             B[$i, $j], B[$j, $i] = B[$j, $i], B[$i, $j]
         end
@@ -35,8 +37,8 @@ function blocktranspose!(::Val{N}, A::AbstractMatrix{T}) where {N,T}
     Bₗ = MMatrix{N,N,T}(undef)
     Bᵣ = MMatrix{N,N,T}(undef)
 
-    for bⱼ in 1:N:size(A, 2)
-        for bᵢ in 1:N:size(A, 1)
+    for bⱼ = 1:N:size(A, 2)
+        for bᵢ = 1:N:size(A, 1)
             bᵢ > bⱼ && break
 
             @inbounds Aₗ = @view A[bᵢ:bᵢ+N-1, bⱼ:bⱼ+N-1]

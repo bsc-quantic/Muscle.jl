@@ -14,15 +14,28 @@ swap!(A, B)
 """
 function mapswap! end
 
-mapswap!(A::AbstractArray, B::AbstractArray, f=identity, g=identity) = mapswap!(Naive, A, B, f, g)
+mapswap!(A::AbstractArray, B::AbstractArray, f = identity, g = identity) =
+    mapswap!(Naive, A, B, f, g)
 
-function mapswap!(::Type{Naive}, A::AbstractArray{T}, B::AbstractArray{T}, f=identity, g=identity) where {T}
+function mapswap!(
+    ::Type{Naive},
+    A::AbstractArray{T},
+    B::AbstractArray{T},
+    f = identity,
+    g = identity,
+) where {T}
     @inbounds for i in eachindex(A, B)
         (A[i], B[i]) = (g(B[i]), f(A[i]))
     end
 end
 
-function mapswap!(::Type{Vectorized}, A::AbstractArray{T}, B::AbstractArray{T}, f=identity, g=identity) where {T}
+function mapswap!(
+    ::Type{Vectorized},
+    A::AbstractArray{T},
+    B::AbstractArray{T},
+    f = identity,
+    g = identity,
+) where {T}
     @inbounds @simd for i in eachindex(A, B)
         (A[i], B[i]) = (g(B[i]), f(A[i]))
     end
