@@ -62,11 +62,7 @@ struct BackendReactant <: Backend end
 
 # set of loaded backends available for use
 const loaded_backends = Set{Backend}([
-    BackendBase(),
-    BackendOMEinsum(),
-    BackendCUDA(),
-    BackendCuTENSOR(),
-    BackendCuTensorNet(),
+    BackendBase(), BackendOMEinsum(), BackendCUDA(), BackendCuTENSOR(), BackendCuTensorNet()
 ])
 
 function choose_backend end

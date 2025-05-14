@@ -321,7 +321,7 @@ Currently the supported methods are `:zeros` and `:repeat`.
 function expand(tensor::Tensor; label, axis=1, size=1, method=:zeros)
     array = parent(tensor)
     data = if size == 1
-        reshape(array, Base.size(array)[1:(axis-1)]..., 1, Base.size(array)[axis:end]...)
+        reshape(array, Base.size(array)[1:(axis - 1)]..., 1, Base.size(array)[axis:end]...)
     elseif method === :zeros
         expand_zeros(array, axis, size)
     elseif method === :repeat
@@ -331,13 +331,13 @@ function expand(tensor::Tensor; label, axis=1, size=1, method=:zeros)
         throw(ArgumentError("method \"$method\" is not valid"))
     end
 
-    indices = (inds(tensor)[1:(axis-1)]..., label, inds(tensor)[axis:end]...)
+    indices = (inds(tensor)[1:(axis - 1)]..., label, inds(tensor)[axis:end]...)
 
     return Tensor(data, indices)
 end
 
 function expand_zeros(array, axis, size)
-    new = zeros(eltype(array), Base.size(array)[1:(axis-1)]..., size, Base.size(array)[axis:end]...)
+    new = zeros(eltype(array), Base.size(array)[1:(axis - 1)]..., size, Base.size(array)[axis:end]...)
 
     view = selectdim(new, axis, 1)
     copy!(view, array)
@@ -347,7 +347,7 @@ end
 
 function expand_repeat(array, axis, size)
     return repeat(
-        reshape(array, Base.size(array)[1:(axis-1)]..., 1, Base.size(array)[axis:end]...);
+        reshape(array, Base.size(array)[1:(axis - 1)]..., 1, Base.size(array)[axis:end]...);
         outer=(fill(1, axis - 1)..., size, fill(1, ndims(array) - axis + 1)...),
     )
 end
@@ -369,7 +369,7 @@ function fuse(tensor::Tensor, parinds; ind=first(parinds))
     append!(perm, map(i -> findfirst(==(i), inds(tensor)), parinds))
 
     data = perm == 1:ndims(tensor) ? parent(tensor) : permutedims(parent(tensor), perm)
-    data = reshape(data, (size(data)[1:(ndims(data)-length(parinds))]..., :))
+    data = reshape(data, (size(data)[1:(ndims(data) - length(parinds))]..., :))
 
     newinds = (filter(∉(parinds), inds(tensor))..., ind)
     return Tensor(data, newinds)

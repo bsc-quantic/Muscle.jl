@@ -39,8 +39,8 @@ function blocktranspose!(::Val{N}, A::AbstractMatrix{T}) where {N,T}
         for bᵢ in 1:N:size(A, 1)
             bᵢ > bⱼ && break
 
-            @inbounds Aₗ = @view A[bᵢ:bᵢ+N-1, bⱼ:bⱼ+N-1]
-            @inbounds Aᵣ = @view A[bⱼ:bⱼ+N-1, bᵢ:bᵢ+N-1]
+            @inbounds Aₗ = @view A[bᵢ:(bᵢ + N - 1), bⱼ:(bⱼ + N - 1)]
+            @inbounds Aᵣ = @view A[bⱼ:(bⱼ + N - 1), bᵢ:(bᵢ + N - 1)]
 
             # fetch blocks
             __blocktranspose_block_fetch!(Aₗ, Bₗ)

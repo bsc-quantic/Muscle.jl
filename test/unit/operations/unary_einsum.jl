@@ -6,14 +6,14 @@ using LinearAlgebra
     # @test einsum("ijk->jk", A) ≈ dropdims(sum(A, dims=1); dims=1)
     @testset let A = Tensor(ones(2, 3, 4), [Index(:i), Index(:j), Index(:k)])
         Ar = unary_einsum(A; dims=[Index(:i)])
-        @test Ar ≈ dropdims(sum(A, dims=1); dims=1)
+        @test Ar ≈ dropdims(sum(A; dims=1); dims=1)
 
         Ar = unary_einsum(A; out=[Index(:j), Index(:k)])
-        @test Ar ≈ dropdims(sum(A, dims=1); dims=1)
+        @test Ar ≈ dropdims(sum(A; dims=1); dims=1)
 
         B = Tensor(zeros(3, 4), [Index(:j), Index(:k)])
         unary_einsum!(B, A)
-        @test B ≈ dropdims(sum(A, dims=1); dims=1)
+        @test B ≈ dropdims(sum(A; dims=1); dims=1)
     end
 
     # @test einsum("ijk->", A) ≈ fill(sum(A))
@@ -21,7 +21,6 @@ using LinearAlgebra
         Ar = unary_einsum(A; dims=inds(A))
         @test isempty(inds(Ar))
         @test parent(Ar) ≈ fill(sum(A))
-
 
         Ar = unary_einsum(A; out=Index[])
         @test isempty(inds(Ar))

@@ -3,9 +3,10 @@ abstract type Naive <: Implementation end
 abstract type Vectorized <: Implementation end
 
 """
-	mapswap!([], A, B, f, g)
+    mapswap!([], A, B, f, g)
 
 Swaps the content of two `StridedArray`s or `SubArray`s and applies the `f`,`g` maps. It is equivalent to:
+
 ```julia
 map!(f, A)
 map!(g, B)

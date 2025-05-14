@@ -7,12 +7,12 @@ Creates an orthogonal basis from a random matrix `A`.
 """
 function gramschmidt!(A::AbstractMatrix{T}, p::Real=2; atol::Real=1e-9) where {T}
     m = size(A, 1)
-    for i in 1:m-1
+    for i in 1:(m - 1)
         # `v` is used as reference
         v = @view A[i:i, :] # NOTE `i:i` to keep it being a row vector
         normalize!(v)
 
-        sA = @view A[i+1:end, :]
+        sA = @view A[(i + 1):end, :]
 
         # `u` is the vector of projections
         u = sA * v'

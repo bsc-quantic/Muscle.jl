@@ -9,36 +9,60 @@ const stablehlo = MLIR.Dialects.stablehlo
 Muscle.memory_space(::Type{<:TracedRArray}) = Muscle.ReactantMemorySpace()
 Muscle.memory_space(::Type{<:Reactant.AnyConcreteRArray}) = Muscle.ReactantMemorySpace()
 
-Muscle.choose_backend(::typeof(Muscle.binary_einsum!), ::TracedRArray, ::TracedRArray, ::TracedRArray) = Muscle.BackendReactant()
+function Muscle.choose_backend(::typeof(Muscle.binary_einsum!), ::TracedRArray, ::TracedRArray, ::TracedRArray)
+    Muscle.BackendReactant()
+end
 
 # we specify `mode` and `track_numbers` types due to ambiguity
 Base.@nospecializeinfer function Reactant.traced_type_inner(
-    @nospecialize(_::Type{Tensor}), seen, mode::Reactant.TraceMode, @nospecialize(track_numbers::Type), @nospecialize(sharding), @nospecialize(runtime)
+    @nospecialize(_::Type{Tensor}),
+    seen,
+    mode::Reactant.TraceMode,
+    @nospecialize(track_numbers::Type),
+    @nospecialize(sharding),
+    @nospecialize(runtime)
 )
     return Tensor
 end
 
 Base.@nospecializeinfer function Reactant.traced_type_inner(
-    @nospecialize(_::Type{Tensor{T}}), seen, mode::Reactant.TraceMode, @nospecialize(track_numbers::Type), @nospecialize(sharding), @nospecialize(runtime)
+    @nospecialize(_::Type{Tensor{T}}),
+    seen,
+    mode::Reactant.TraceMode,
+    @nospecialize(track_numbers::Type),
+    @nospecialize(sharding),
+    @nospecialize(runtime)
 ) where {T}
     return Tensor{TracedRNumber{T}}
 end
 
 Base.@nospecializeinfer function Reactant.traced_type_inner(
-    @nospecialize(_::Type{Tensor{T,N}}), seen, mode::Reactant.TraceMode, @nospecialize(track_numbers::Type), @nospecialize(sharding), @nospecialize(runtime)
+    @nospecialize(_::Type{Tensor{T,N}}),
+    seen,
+    mode::Reactant.TraceMode,
+    @nospecialize(track_numbers::Type),
+    @nospecialize(sharding),
+    @nospecialize(runtime)
 ) where {T,N}
     return Tensor{TracedRNumber{T,N}}
 end
 
 Base.@nospecializeinfer function Reactant.traced_type_inner(
-    @nospecialize(_::Type{Tensor{T,N,A}}), seen, mode::Reactant.TraceMode, @nospecialize(track_numbers::Type), sharding, runtime
+    @nospecialize(_::Type{Tensor{T,N,A}}),
+    seen,
+    mode::Reactant.TraceMode,
+    @nospecialize(track_numbers::Type),
+    sharding,
+    runtime,
 ) where {T,N,A}
     A_traced = Reactant.traced_type_inner(A, seen, mode, track_numbers, sharding, runtime)
     T_traced = eltype(A_traced)
     return Tensor{T_traced,N,A_traced}
 end
 
-function Reactant.Compiler.make_tracer(seen, @nospecialize(prev::RT), @nospecialize(path), mode; kwargs...) where {RT<:Tensor}
+function Reactant.Compiler.make_tracer(
+    seen, @nospecialize(prev::RT), @nospecialize(path), mode; kwargs...
+) where {RT<:Tensor}
     traced_data = Reactant.Compiler.make_tracer(seen, parent(prev), Reactant.append_path(path, :data), mode; kwargs...)
     return Tensor(traced_data, inds(prev))
 end

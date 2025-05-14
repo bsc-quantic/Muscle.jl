@@ -22,8 +22,16 @@ function tensor_svd_thin! end
 
 choose_backend_rule(::typeof(tensor_svd_thin), ::Type{<:Array}) = BackendBase()
 choose_backend_rule(::typeof(tensor_svd_thin), ::Type{<:CuArray}) = BackendCuTensorNet()
-choose_backend_rule(::typeof(tensor_svd_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(tensor_svd_thin!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
+function choose_backend_rule(
+    ::typeof(tensor_svd_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}
+)
+    BackendBase()
+end
+function choose_backend_rule(
+    ::typeof(tensor_svd_thin!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}
+)
+    BackendCuTensorNet()
+end
 
 # function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), kwargs...)
 #     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
@@ -55,13 +63,7 @@ end
 
 ## `Base`
 function tensor_svd_thin(
-    ::BackendBase,
-    A::Tensor;
-    inds_u=(),
-    inds_v=(),
-    ind_s=Index(gensym(:vind)),
-    inplace=false,
-    kwargs...,
+    ::BackendBase, A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, kwargs...
 )
     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
     @argcheck isdisjoint(inds_u, inds_v)
@@ -89,17 +91,12 @@ function tensor_svd_thin(
     return U, s, Vt
 end
 
-function tensor_svd_thin!(
-    ::BackendBase,
-    U::Tensor,
-    s::Tensor,
-    V::Tensor,
-    A::Tensor;
-    kwargs...
-)
+function tensor_svd_thin!(::BackendBase, U::Tensor, s::Tensor, V::Tensor, A::Tensor; kwargs...)
     @warn "tensor_svd_thing! on BackendBase does intermediate copying. Consider using `tensor_svd_thin`."
 
-    tmp_U, tmp_s, tmp_V = tensor_svd_thin(BackendBase(), A; inds_u=inds(U), inds_v=inds(V), ind_s=only(inds(s)), kwargs...)
+    tmp_U, tmp_s, tmp_V = tensor_svd_thin(
+        BackendBase(), A; inds_u=inds(U), inds_v=inds(V), ind_s=only(inds(s)), kwargs...
+    )
 
     @argcheck arch(tmp_U) == arch(U)
     @argcheck arch(tmp_s) == arch(s)
@@ -126,28 +123,13 @@ end
 #     tensor_svd_thin!(arch, A, U, s, V; kwargs...)
 # end
 
-function tensor_svd_thin!(
-    ::BackendCuTensorNet,
-    U::Tensor,
-    s::Tensor,
-    V::Tensor,
-    A::Tensor;
-    kwargs...
-)
-    tensor_svd_thin!(BackendCuTensorNet(), parent(U), inds(U), parent(s), parent(V), inds(V), parent(A), inds(A); kwargs...)
+function tensor_svd_thin!(::BackendCuTensorNet, U::Tensor, s::Tensor, V::Tensor, A::Tensor; kwargs...)
+    tensor_svd_thin!(
+        BackendCuTensorNet(), parent(U), inds(U), parent(s), parent(V), inds(V), parent(A), inds(A); kwargs...
+    )
 end
 
-function tensor_svd_thin!(
-    ::BackendCuTensorNet,
-    U,
-    inds_u,
-    s,
-    V,
-    inds_v,
-    A,
-    inds_a;
-    kwargs...
-)
+function tensor_svd_thin!(::BackendCuTensorNet, U, inds_u, s, V, inds_v, A, inds_a; kwargs...)
     modemap = Dict{Index,Int}(ind => i for (i, ind) in enumerate(unique(inds_a ∪ inds_u ∪ inds_v)))
     modes_a = [modemap[ind] for ind in inds(A)]
     modes_u = [modemap[ind] for ind in inds(U)]

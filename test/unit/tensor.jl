@@ -204,11 +204,15 @@ end
 
 @testset "Base.replace" begin
     tensor = Tensor(zeros(2, 2, 2), [Index(:i), Index(:j), Index(:k)])
-    @test inds(replace(tensor, Index(:i) => Index(:u), Index(:j) => Index(:v), Index(:k) => Index(:w))) == [Index(:u), Index(:v), Index(:w)]
-    @test parent(replace(tensor, Index(:i) => Index(:u), Index(:j) => Index(:v), Index(:k) => Index(:w))) === parent(tensor)
+    @test inds(replace(tensor, Index(:i) => Index(:u), Index(:j) => Index(:v), Index(:k) => Index(:w))) ==
+        [Index(:u), Index(:v), Index(:w)]
+    @test parent(replace(tensor, Index(:i) => Index(:u), Index(:j) => Index(:v), Index(:k) => Index(:w))) ===
+        parent(tensor)
 
-    @test inds(replace(tensor, Index(:a) => Index(:u), Index(:b) => Index(:v), Index(:c) => Index(:w))) == [Index(:i), Index(:j), Index(:k)]
-    @test parent(replace(tensor, Index(:a) => Index(:u), Index(:b) => Index(:v), Index(:c) => Index(:w))) === parent(tensor)
+    @test inds(replace(tensor, Index(:a) => Index(:u), Index(:b) => Index(:v), Index(:c) => Index(:w))) ==
+        [Index(:i), Index(:j), Index(:k)]
+    @test parent(replace(tensor, Index(:a) => Index(:u), Index(:b) => Index(:v), Index(:c) => Index(:w))) ===
+        parent(tensor)
 end
 
 @testset "dim" begin

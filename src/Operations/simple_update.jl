@@ -6,7 +6,9 @@ function simple_update end
 function simple_update! end
 
 choose_backend_rule(::typeof(simple_update), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendCustom()
-choose_backend_rule(::typeof(simple_update), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTensorNet()
+function choose_backend_rule(::typeof(simple_update), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray})
+    BackendCuTensorNet()
+end
 
 # absorb behavior trait
 # used to keep type-inference happy (`DontAbsorb` returns 3 tensors, while the rest return 2)
@@ -31,16 +33,7 @@ function simple_update(
     backend = choose_backend(simple_update, parent(A), parent(B), parent(G))
 
     return simple_update(
-        backend,
-        A,
-        ind_physical_a,
-        B,
-        ind_physical_b,
-        ind_bond_ab,
-        G,
-        ind_physical_g_a,
-        ind_physical_g_b;
-        kwargs...,
+        backend, A, ind_physical_a, B, ind_physical_b, ind_bond_ab, G, ind_physical_g_a, ind_physical_g_b; kwargs...
     )
 end
 
@@ -60,11 +53,7 @@ function simple_update(
     rtol::Float64=0.0,
     maxdim=nothing,
 )
-    Θ = Muscle.binary_einsum(
-        Muscle.binary_einsum(A, B; dims=[ind_bond_ab]),
-        G;
-        dims=[ind_physical_a, ind_physical_b],
-    )
+    Θ = Muscle.binary_einsum(Muscle.binary_einsum(A, B; dims=[ind_bond_ab]), G; dims=[ind_physical_a, ind_physical_b])
     Θ = replace(Θ, ind_physical_g_a => ind_physical_a, ind_physical_g_b => ind_physical_b)
 
     inds_u = setdiff(inds(A), [ind_bond_ab])
