@@ -37,6 +37,7 @@ function simple_update(
     )
 end
 
+# TODO change and document the way we indicate the physical indices to contract
 function simple_update(
     ::BackendCustom,
     A::Tensor,
@@ -74,13 +75,13 @@ function simple_update(
     if absorb isa DontAbsorb
         return U, S, V
     elseif absorb isa AbsorbU
-        U = Muscle.binary_einsum(U, S; dims=[])
+        U = Muscle.binary_einsum(U, S; dims=Index[])
     elseif absorb isa AbsorbV
-        V = Muscle.binary_einsum(V, S; dims=[])
+        V = Muscle.binary_einsum(V, S; dims=Index[])
     elseif absorb isa AbsorbEqually
         S_sqrt = sqrt.(S)
-        U = Muscle.binary_einsum(U, S_sqrt; dims=[])
-        V = Muscle.binary_einsum(V, S_sqrt; dims=[])
+        U = Muscle.binary_einsum(U, S_sqrt; dims=Index[])
+        V = Muscle.binary_einsum(V, S_sqrt; dims=Index[])
     end
 
     return U, V
