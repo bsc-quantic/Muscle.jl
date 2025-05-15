@@ -2,11 +2,11 @@ using Test
 using Muscle
 using Reactant
 using Adapt
+using Enzyme
 
 # TODO test `make_tracer`
 # TODO test `create_result`
 # TODO test `traced_getfield`
-# TODO test `Enzyme.autodiff`
 
 # TODO test unary einsum
 # TODO test scalar × tensor
@@ -114,4 +114,52 @@ end
 
         @test Xre ≈ X
     end
+end
+
+@testset "autodiff" begin
+    @testset "inner product" begin
+        # inner-product of vectors
+        @testset let
+            A = Tensor([1.0, 2.0], (:i,))
+            B = Tensor([3.0, 4.0], (:i,))
+            Are = adapt(ConcreteRArray, A)
+            Bre = adapt(ConcreteRArray, B)
+
+            grad_f(a, b) = Enzyme.gradient(Reverse, binary_einsum, a, b)
+            dAre, dBre = @jit grad_f(Are, Bre)
+
+            @test dAre ≈ B
+            @test dBre ≈ A
+        end
+
+        # inner-product of matrices
+        @testset let
+            A = Tensor([1.0 2.0; 3.0 4.0], (:i, :k))
+            B = Tensor([5.0 6.0; 7.0 8.0], (:i, :k))
+            Are = adapt(ConcreteRArray, A)
+            Bre = adapt(ConcreteRArray, B)
+
+            grad_f2(a, b) = Enzyme.gradient(Reverse, binary_einsum, a, b)
+            dAre, dBre = @jit grad_f2(Are, Bre)
+
+            @test dAre ≈ B
+            @test dBre ≈ A
+        end
+
+        # inner-product of complex matrices
+        @testset let
+            A = Tensor(ComplexF64[1.0 2.0; 3.0im 4.0], (:i, :k))
+            B = Tensor(ComplexF64[5.0 6.0im; 7.0 8.0], (:i, :k))
+            Are = adapt(ConcreteRArray, A)
+            Bre = adapt(ConcreteRArray, B)
+
+            grad_f3(a, b) = Enzyme.gradient(Reverse, binary_einsum, a, b)
+            dAre, dBre = @jit grad_f3(Are, Bre)
+
+            @test dAre ≈ conj(B)
+            @test dBre ≈ conj(A)
+        end
+    end
+
+    # TODO test other einsum cases
 end
