@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
   test:
-    name: Julia ${{ matrix.version }} / ${{ matrix.downgrade }}
+    name: Julia ${{ matrix.version }} / downgrade = ${{ matrix.downgrade }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
