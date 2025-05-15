@@ -5,9 +5,14 @@ ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
 Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Muscle = "21fe5c4b-a943-414d-bf3e-516f24900631"
+QuantumTags = "2406e0f5-9e5e-4424-966e-8bc9c78b228f"
 Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+Muscle = {path = ".."}
 
 [compat]
 Aqua = "0.6"
