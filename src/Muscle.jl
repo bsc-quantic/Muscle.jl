@@ -1,7 +1,6 @@
 module Muscle
 
 import EinExprs: inds
-using Compat: @compat
 
 include("Utils/Utils.jl")
 
