@@ -116,10 +116,10 @@ Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
     result_inds = setdiff(ia, contracting_inds, batching_inds) ∪ setdiff(ib, contracting_inds, batching_inds)
     ic = vcat(batching_inds, result_inds)
 
-    # TODO replace for `Ops.convert`/`adapt` when it's available (there can be problems with nested array structures)
+    # StableHLO expects matching element types
     T = Base.promote_eltype(a, b)
-    da = eltype(a) != T ? TracedRArray{Reactant.unwrapped_eltype(T),ndims(a)}(parent(a)) : parent(a)
-    db = eltype(b) != T ? TracedRArray{Reactant.unwrapped_eltype(T),ndims(b)}(parent(b)) : parent(b)
+    da = T.(Reactant.materialize_traced_array(parent(a)))
+    db = T.(Reactant.materialize_traced_array(parent(b)))
 
     data = Reactant.Ops.dot_general(da, db; contracting_dimensions, batching_dimensions)
 
