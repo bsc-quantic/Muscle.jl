@@ -25,41 +25,6 @@ Base.@nospecializeinfer function Reactant.traced_type_inner(
     return Tensor
 end
 
-Base.@nospecializeinfer function Reactant.traced_type_inner(
-    @nospecialize(_::Type{Tensor{T}}),
-    seen,
-    mode::Reactant.TraceMode,
-    @nospecialize(track_numbers::Type),
-    @nospecialize(sharding),
-    @nospecialize(runtime)
-) where {T}
-    return Tensor{TracedRNumber{T}}
-end
-
-Base.@nospecializeinfer function Reactant.traced_type_inner(
-    @nospecialize(_::Type{Tensor{T,N}}),
-    seen,
-    mode::Reactant.TraceMode,
-    @nospecialize(track_numbers::Type),
-    @nospecialize(sharding),
-    @nospecialize(runtime)
-) where {T,N}
-    return Tensor{TracedRNumber{T,N}}
-end
-
-Base.@nospecializeinfer function Reactant.traced_type_inner(
-    @nospecialize(_::Type{Tensor{T,N,A}}),
-    seen,
-    mode::Reactant.TraceMode,
-    @nospecialize(track_numbers::Type),
-    sharding,
-    runtime,
-) where {T,N,A}
-    A_traced = Reactant.traced_type_inner(A, seen, mode, track_numbers, sharding, runtime)
-    T_traced = eltype(A_traced)
-    return Tensor{T_traced,N,A_traced}
-end
-
 function Reactant.Compiler.make_tracer(
     seen, @nospecialize(prev::RT), @nospecialize(path), mode; kwargs...
 ) where {RT<:Tensor}
@@ -75,15 +40,13 @@ end
 Muscle.memory_space(::TracedRArray) = Muscle.ReactantMemorySpace()
 Muscle.memory_space(::Reactant.AnyConcreteRArray) = Muscle.ReactantMemorySpace()
 
-function Muscle.unary_einsum(
-    @nospecialize(a::Tensor{TracedRNumber{T},N,TracedRArray{T,N}}); dims=nonunique(inds(a)), out=nothing
-) where {T,N}
+function Muscle.unary_einsum(::Muscle.BackendReactant, @nospecialize(a::Tensor); dims=nonunique(inds(a)), out=nothing)
     error("compilation of `Muscle.unary_einsum` is not yet supported")
 end
 
 Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
-    @nospecialize(a::Tensor{TracedRNumber{Ta}}), @nospecialize(b::Tensor{TracedRNumber{Tb}}); kwargs...
-) where {Ta,Tb}
+    ::Muscle.BackendReactant, @nospecialize(a::Tensor), @nospecialize(b::Tensor); kwargs...
+)
     dims = get(kwargs, :dims) do
         ∩(inds(a), inds(b))
     end
@@ -118,8 +81,10 @@ Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
 
     # StableHLO expects matching element types
     T = Base.promote_eltype(a, b)
-    da = T.(Reactant.materialize_traced_array(parent(a)))
-    db = T.(Reactant.materialize_traced_array(parent(b)))
+    da = parent(a)
+    db = parent(b)
+    da = T.(Reactant.materialize_traced_array(da))
+    db = T.(Reactant.materialize_traced_array(db))
 
     data = Reactant.Ops.dot_general(da, db; contracting_dimensions, batching_dimensions)
 
@@ -132,18 +97,20 @@ Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
     return Tensor(data, ic)
 end
 
-function Muscle.binary_einsum(@nospecialize(a::Tensor), @nospecialize(b::Tensor{TracedRNumber{T}}); kwargs...) where {T}
-    Muscle.binary_einsum(b, a; kwargs...)
-end
+# function Muscle.binary_einsum(
+#     ::Muscle.BackendReactant, @nospecialize(a::Tensor), @nospecialize(b::Tensor{TracedRNumber{T}}); kwargs...
+# ) where {T}
+#     Muscle.binary_einsum(b, a; kwargs...)
+# end
 
-function Muscle.binary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}), @nospecialize(b::Tensor); kwargs...) where {T}
-    return Muscle.binary_einsum(a, Tensor(Reactant.Ops.constant(parent(b)), inds(b)); kwargs...)
-end
+# function Muscle.binary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}), @nospecialize(b::Tensor); kwargs...) where {T}
+#     return Muscle.binary_einsum(a, Tensor(Reactant.Ops.constant(parent(b)), inds(b)); kwargs...)
+# end
 
 # TODO binary_einsum!
 
 # fixes issue with default `conj(x::AbstractArray) = x` method from Base (it might be overlayed in Reactant.jl)
-Base.conj(@nospecialize(x::Tensor{<:TracedRNumber})) = x
-Base.conj(@nospecialize(x::Tensor{TracedRNumber{T}})) where {T<:Complex} = Tensor(conj(parent(x)), inds(x))
+# Base.conj(@nospecialize(x::Tensor{<:TracedRNumber})) = x
+# Base.conj(@nospecialize(x::Tensor{TracedRNumber{T}})) where {T<:Complex} = Tensor(conj(parent(x)), inds(x))
 
 end
