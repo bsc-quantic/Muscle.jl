@@ -82,10 +82,8 @@ function Muscle.unary_einsum(
 end
 
 Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
-    @nospecialize(a::Tensor{TracedRNumber{Ta},Na,TracedRArray{Ta,Na}}),
-    @nospecialize(b::Tensor{TracedRNumber{Tb},Nb,TracedRArray{Tb,Nb}});
-    kwargs...,
-) where {Ta,Na,Tb,Nb}
+    @nospecialize(a::Tensor{TracedRNumber{Ta}}), @nospecialize(b::Tensor{TracedRNumber{Tb}}); kwargs...
+) where {Ta,Tb}
     dims = get(kwargs, :dims) do
         ∩(inds(a), inds(b))
     end
@@ -134,24 +132,18 @@ Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
     return Tensor(data, ic)
 end
 
-function Muscle.binary_einsum(
-    @nospecialize(a::Tensor), @nospecialize(b::Tensor{TracedRNumber{T},N,TracedRArray{T,N}}); kwargs...
-) where {T,N}
+function Muscle.binary_einsum(@nospecialize(a::Tensor), @nospecialize(b::Tensor{TracedRNumber{T}}); kwargs...) where {T}
     Muscle.binary_einsum(b, a; kwargs...)
 end
 
-function Muscle.binary_einsum(
-    @nospecialize(a::Tensor{TracedRNumber{T},N,TracedRArray{T,N}}), @nospecialize(b::Tensor); kwargs...
-) where {T,N}
+function Muscle.binary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}), @nospecialize(b::Tensor); kwargs...) where {T}
     return Muscle.binary_einsum(a, Tensor(Reactant.Ops.constant(parent(b)), inds(b)); kwargs...)
 end
 
 # TODO binary_einsum!
 
 # fixes issue with default `conj(x::AbstractArray) = x` method from Base (it might be overlayed in Reactant.jl)
-Base.conj(@nospecialize(x::Tensor{<:TracedRNumber,N,<:TracedRArray})) where {N} = x
-function Base.conj(@nospecialize(x::Tensor{TracedRNumber{T},N,<:TracedRArray})) where {T<:Complex,N}
-    Tensor(conj(parent(x)), inds(x))
-end
+Base.conj(@nospecialize(x::Tensor{<:TracedRNumber})) = x
+Base.conj(@nospecialize(x::Tensor{TracedRNumber{T}})) where {T<:Complex} = Tensor(conj(parent(x)), inds(x))
 
 end
