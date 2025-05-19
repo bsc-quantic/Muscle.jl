@@ -88,7 +88,8 @@ end
 
     subtensor = view(tensor, Index(:i) => 1)
     copied_subtensor = copy(subtensor)
-    @test copied_subtensor isa Tensor{T,N,Array{T,N}} where {T,N}
+    @test copied_subtensor isa Tensor
+    @test parent(copied_subtensor) isa Array
 end
 
 @testset "similar" begin
