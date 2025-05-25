@@ -75,9 +75,7 @@ end
 Muscle.memory_space(::TracedRArray) = Muscle.ReactantMemorySpace()
 Muscle.memory_space(::Reactant.AnyConcreteRArray) = Muscle.ReactantMemorySpace()
 
-function Muscle.unary_einsum(
-    @nospecialize(a::Tensor{TracedRNumber{T},N,TracedRArray{T,N}}); dims=nonunique(inds(a)), out=nothing
-) where {T,N}
+function Muscle.unary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}); dims=nonunique(inds(a)), out=nothing) where {T}
     error("compilation of `Muscle.unary_einsum` is not yet supported")
 end
 
