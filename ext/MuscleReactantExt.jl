@@ -60,17 +60,17 @@ Base.@nospecializeinfer function Reactant.traced_type_inner(
     return Tensor{T_traced,N,A_traced}
 end
 
-function Reactant.Compiler.make_tracer(
-    seen, @nospecialize(prev::RT), @nospecialize(path), mode; kwargs...
-) where {RT<:Tensor}
-    traced_data = Reactant.Compiler.make_tracer(seen, parent(prev), Reactant.append_path(path, :data), mode; kwargs...)
-    return Tensor(traced_data, inds(prev))
-end
+# function Reactant.Compiler.make_tracer(
+#     seen, @nospecialize(prev::RT), @nospecialize(path), mode; kwargs...
+# ) where {RT<:Tensor}
+#     traced_data = Reactant.Compiler.make_tracer(seen, parent(prev), Reactant.append_path(path, :data), mode; kwargs...)
+#     return Tensor(traced_data, inds(prev))
+# end
 
-function Reactant.Compiler.create_result(@nospecialize(tocopy::Tensor), @nospecialize(path), args...)
-    data = Reactant.Compiler.create_result(parent(tocopy), Reactant.append_path(path, :data), args...)
-    return :($Tensor($data, $(inds(tocopy))))
-end
+# function Reactant.Compiler.create_result(@nospecialize(tocopy::Tensor), @nospecialize(path), args...)
+#     data = Reactant.Compiler.create_result(parent(tocopy), Reactant.append_path(path, :data), args...)
+#     return :($Tensor($data, $(inds(tocopy))))
+# end
 
 Muscle.memory_space(::TracedRArray) = Muscle.ReactantMemorySpace()
 Muscle.memory_space(::Reactant.AnyConcreteRArray) = Muscle.ReactantMemorySpace()
