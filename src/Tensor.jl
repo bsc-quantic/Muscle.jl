@@ -371,6 +371,6 @@ function fuse(tensor::Tensor, parinds; ind=first(parinds))
     data = perm == 1:ndims(tensor) ? parent(tensor) : permutedims(parent(tensor), perm)
     data = reshape(data, (size(data)[1:(ndims(data) - length(parinds))]..., :))
 
-    newinds = (filter(∉(parinds), inds(tensor))..., ind)
+    newinds = [filter(∉(parinds), inds(tensor))..., ind]
     return Tensor(data, newinds)
 end
