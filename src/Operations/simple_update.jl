@@ -65,9 +65,9 @@ function simple_update(
     # TODO use low-rank approximations
     # ad-hoc truncation
     if !isnothing(maxdim)
-        U = view(U, ind_s => 1:maxdim)
-        S = view(S, ind_s => 1:maxdim)
-        V = view(V, ind_s => 1:maxdim)
+        U = view(U, ind_s => 1:max(maxdim, length(S)))
+        S = view(S, ind_s => 1:max(maxdim, length(S)))
+        V = view(V, ind_s => 1:max(maxdim, length(S)))
     end
 
     normalize && LinearAlgebra.normalize!(S)
