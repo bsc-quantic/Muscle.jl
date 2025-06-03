@@ -112,11 +112,19 @@ function simple_update(
     modes_b = Int[findfirst(==(i), all_inds) for i in inds(B)]
     modes_g = Int[findfirst(==(i), all_inds) for i in inds(G)]
 
-    # TODO implement maxdim for simple_update on GPU (i think we just need to correctly size U and V beforehand)
-    !isnothing(maxdim) && error("simple_update with maxdim kwarg not yet implemented for GPU")
+    # implement maxdim for simple_update on GPU (i think we just need to correctly size U and V beforehand)
+    new_size_bond_ab = min(length(A) ÷ size(A, ind_bond_ab), length(B) ÷ size(B, ind_bond_ab))
+    if !isnothing(maxdim)
+        new_size_bond_ab = min(new_size_bond_ab, maxdim)
+    end
 
-    U = similar(A)
-    V = similar(B)
+    # create U and V tensors with the same size as A and B, but with the new bond index size
+    U = Tensor(
+        CUDA.zeros(eltype(A), Tuple([i == ind_bond_ab ? new_size_bond_ab : size(A, i) for i in inds(A)])), inds(A)
+    )
+    V = Tensor(
+        CUDA.zeros(eltype(B), Tuple([i == ind_bond_ab ? new_size_bond_ab : size(B, i) for i in inds(B)])), inds(B)
+    )
 
     # cuTensorNet doesn't like to reuse the physical indices of a and b, so we rename them here
     U = replace(U, ind_physical_a => ind_physical_g_a)
