@@ -144,4 +144,11 @@ end
 Base.conj(@nospecialize(x::Tensor{<:TracedRNumber})) = x
 Base.conj(@nospecialize(x::Tensor{TracedRNumber{T}})) where {T<:Complex} = Tensor(conj(parent(x)), inds(x))
 
+function __init__()
+    Reactant.@skip_rewrite_func Muscle.binary_einsum
+    Reactant.@skip_rewrite_func Muscle.nonunique
+    Reactant.@skip_rewrite_type Type{<:Muscle.Index}
+    Reactant.@skip_rewrite_type Type{<:Muscle.Tensor}
+end
+
 end
