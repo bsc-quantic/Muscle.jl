@@ -1,6 +1,6 @@
 using ArgCheck
 using Adapt
-using CUDA
+#using CUDA
 using LinearAlgebra: LinearAlgebra
 
 abstract type Vendor end
@@ -15,7 +15,6 @@ struct ReactantMemorySpace <: MemorySpace end
 
 memory_space(::T) where {T<:AbstractArray} = memory_space(T)
 memory_space(::Type{<:Array}) = CPUMemorySpace()
-memory_space(::Type{<:CuArray}) = CUDAMemorySpace()
 memory_space(::Type{T}) where {T<:WrappedArray} = memory_space(Adapt.unwrap_type(T))
 memory_space(x::Tensor) = memory_space(parent_type(x))
 

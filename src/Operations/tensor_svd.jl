@@ -1,5 +1,4 @@
 using LinearAlgebra: LinearAlgebra
-using cuTensorNet: cuTensorNet
 using ..Muscle: factorinds
 
 # TODO implement low-rank approximations (truncated SVD, reduced SVD...)
@@ -21,18 +20,11 @@ function tensor_svd_thin end
 function tensor_svd_thin! end
 
 choose_backend_rule(::typeof(tensor_svd_thin), ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(tensor_svd_thin), ::Type{<:CuArray}) = BackendCuTensorNet()
 function choose_backend_rule(
     ::typeof(tensor_svd_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}
 )
     BackendBase()
 end
-function choose_backend_rule(
-    ::typeof(tensor_svd_thin!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray}
-)
-    BackendCuTensorNet()
-end
-
 # function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), kwargs...)
 #     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
 #     left_extent = prod(Base.Fix1(size, A), inds_u)

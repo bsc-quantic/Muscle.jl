@@ -1,15 +1,7 @@
-# using CUDA: CUDA
-# using cuTENSOR: cuTENSOR
-using cuTensorNet: cuTensorNet
-
 function simple_update end
 function simple_update! end
 
 choose_backend_rule(::typeof(simple_update), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendCustom()
-function choose_backend_rule(::typeof(simple_update), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray})
-    BackendCuTensorNet()
-end
-
 # absorb behavior trait
 # used to keep type-inference happy (`DontAbsorb` returns 3 tensors, while the rest return 2)
 abstract type AbsorbBehavior end

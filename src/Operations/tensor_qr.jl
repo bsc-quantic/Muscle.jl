@@ -1,5 +1,4 @@
 using LinearAlgebra: LinearAlgebra
-using cuTensorNet: cuTensorNet
 using ..Muscle: factorinds
 
 # TODO implement low-rank approximations (truncated QR, reduced QR...)
@@ -20,12 +19,7 @@ function tensor_qr_thin! end
 
 # TODO add a preference system for some backends
 choose_backend_rule(::typeof(tensor_qr_thin), ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(tensor_qr_thin), ::Type{<:CuArray}) = BackendCuTensorNet()
 choose_backend_rule(::typeof(tensor_qr_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
-function choose_backend_rule(::typeof(tensor_qr_thin!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray})
-    BackendCuTensorNet()
-end
-
 function tensor_qr_thin(A::Tensor; inds_q=(), inds_r=(), ind_virtual=Index(gensym(:qr)), inplace=false, kwargs...)
     backend = choose_backend(tensor_qr_thin, A)
     return tensor_qr_thin(backend, A; inds_q, inds_r, ind_virtual, inplace, kwargs...)

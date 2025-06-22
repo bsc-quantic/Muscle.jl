@@ -1,7 +1,7 @@
 using Adapt
 using OMEinsum: OMEinsum
-using CUDA
-using cuTENSOR: cuTENSOR
+#using CUDA
+#using cuTENSOR: cuTENSOR
 
 """
     binary_einsum(a::Tensor, b::Tensor; dims=∩(inds(a), inds(b)), out=nothing)
@@ -24,13 +24,7 @@ function binary_einsum! end
 
 # TODO add a preference system for some backends
 choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(binary_einsum), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTENSOR()
 choose_backend_rule(::typeof(binary_einsum!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTENSOR()
-function choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray})
-    BackendCuTENSOR()
-end
-
 function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=nothing)
     inds_sum = ∩(dims, inds(a), inds(b))
 
@@ -91,6 +85,7 @@ function binary_einsum!(::BackendOMEinsum, c, inds_c, a, inds_a, b, inds_b)
     OMEinsum.einsum!((inds_a, inds_b), inds_c, (a, b), c, true, false, size_dict)
     return c
 end
+
 
 ## `CUDA` (uses cuTENSOR)
 function binary_einsum(::BackendCuTENSOR, inds_c, a, inds_a, b, inds_b; kwargs...)
