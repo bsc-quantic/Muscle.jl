@@ -18,17 +18,17 @@ function tagize(index::Symbol)
 end
 
 # TODO customize index names
-function Base.convert(::Type{Tensor}, tensor::ITensor)
-    array = ITensors.array(tensor)
-    is = map(symbolize, ITensors.inds(tensor))
+function Base.convert(::Type{Tensor}, tt::ITensor)
+    array = ITensors.array(tt)
+    is = map(symbolize, ITensors.inds(tt))
     return Tensor(array, is)
 end
 
-function Base.convert(::Type{ITensor}, tensor::Tensor; inds=Dict{Symbol,Index}())
-    indices = map(Tenet.inds(tensor)) do i
-        haskey(inds, i) ? inds[i] : Index(size(tensor, i), tagize(i))
+function Base.convert(::Type{ITensor}, tt::Tensor; iinds=Dict{Symbol,Index}())
+    indices = map(Muscle.inds(tt)) do i
+        haskey(iinds, i) ? iinds[i] : Index(size(tt, i), tagize(i.tag)) #TODO check I added a .tag here 
     end
-    return ITensor(parent(tensor), indices)
+    return ITensor(parent(tt), indices)
 end
 
 # Base.convert(::Type{TensorNetwork}, tn::Vector{ITensor}) = TensorNetwork(map(t -> convert(Tensor, t), tn))
