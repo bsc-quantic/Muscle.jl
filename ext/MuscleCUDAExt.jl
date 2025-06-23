@@ -1,3 +1,6 @@
+module MuscleCUDAExt
+
+
 using CUDA
 using cuTensor
 using cuTensorNet: cuTensorNet
@@ -232,4 +235,6 @@ function tensor_svd_thin!(::BackendCuTensorNet, U, inds_u, s, V, inds_v, A, inds
     LinearAlgebra.svd!(A, modes_a, U, modes_u, s, V, modes_v; kwargs...)
 
     return u, s, v
+end
+
 end
