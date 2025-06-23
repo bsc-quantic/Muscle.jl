@@ -4,6 +4,7 @@ module MuscleCUDAExt
 using CUDA
 using cuTensor
 using cuTensorNet: cuTensorNet
+using Muscle
 
 
 memory_space(::Type{<:CuArray}) = CUDAMemorySpace()
