@@ -2,9 +2,6 @@ using CUDA
 using cuTensor
 using cuTensorNet: cuTensorNet
 
-struct CUDAMemorySpace <: MemorySpace end
-arch(::CUDAMemorySpace) = GPU()
-
 
 memory_space(::Type{<:CuArray}) = CUDAMemorySpace()
 

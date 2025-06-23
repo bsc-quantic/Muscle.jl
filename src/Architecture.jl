@@ -10,6 +10,8 @@ struct NVIDIA <: Vendor end
 abstract type MemorySpace end
 struct CPUMemorySpace <: MemorySpace end
 struct ReactantMemorySpace <: MemorySpace end
+struct CUDAMemorySpace <: MemorySpace end
+
 
 memory_space(::T) where {T<:AbstractArray} = memory_space(T)
 memory_space(::Type{<:Array}) = CPUMemorySpace()
@@ -22,6 +24,7 @@ struct GPU <: Architecture end
 
 arch(x::AbstractArray) = arch(memory_space(x))
 arch(::CPUMemorySpace) = CPU()
+arch(::CUDAMemorySpace) = GPU()
 
 # TODO promote memspace
 function promote_memspace(a, b)
