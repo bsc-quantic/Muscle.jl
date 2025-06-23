@@ -9,7 +9,12 @@ const stablehlo = MLIR.Dialects.stablehlo
 Muscle.memory_space(::Type{<:TracedRArray}) = Muscle.ReactantMemorySpace()
 Muscle.memory_space(::Type{<:Reactant.AnyConcreteRArray}) = Muscle.ReactantMemorySpace()
 
-function Muscle.choose_backend(::typeof(Muscle.binary_einsum!), ::TracedRArray, ::TracedRArray, ::TracedRArray)
+Base.Base.@nospecializeinfer function Muscle.choose_backend(
+    ::typeof(Muscle.binary_einsum!),
+    @nospecialize(_::TracedRArray),
+    @nospecialize(_::TracedRArray),
+    @nospecialize(_::TracedRArray)
+)
     Muscle.BackendReactant()
 end
 
@@ -17,7 +22,7 @@ end
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor}),
     seen,
-    mode::Reactant.TraceMode,
+    @nospecialize(mode::Reactant.TraceMode),
     @nospecialize(track_numbers::Type),
     @nospecialize(sharding),
     @nospecialize(runtime)
@@ -28,7 +33,7 @@ end
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor{T}}),
     seen,
-    mode::Reactant.TraceMode,
+    @nospecialize(mode::Reactant.TraceMode),
     @nospecialize(track_numbers::Type),
     @nospecialize(sharding),
     @nospecialize(runtime)
@@ -39,7 +44,7 @@ end
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor{T,N}}),
     seen,
-    mode::Reactant.TraceMode,
+    @nospecialize(mode::Reactant.TraceMode),
     @nospecialize(track_numbers::Type),
     @nospecialize(sharding),
     @nospecialize(runtime)
@@ -72,8 +77,8 @@ end
 #     return :($Tensor($data, $(inds(tocopy))))
 # end
 
-Muscle.memory_space(::TracedRArray) = Muscle.ReactantMemorySpace()
-Muscle.memory_space(::Reactant.AnyConcreteRArray) = Muscle.ReactantMemorySpace()
+Muscle.memory_space(@nospecialize(_::TracedRArray)) = Muscle.ReactantMemorySpace()
+Muscle.memory_space(@nospecialize(_::Reactant.AnyConcreteRArray)) = Muscle.ReactantMemorySpace()
 
 function Muscle.unary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}); dims=nonunique(inds(a)), out=nothing) where {T}
     error("compilation of `Muscle.unary_einsum` is not yet supported")
@@ -143,5 +148,12 @@ end
 # fixes issue with default `conj(x::AbstractArray) = x` method from Base (it might be overlayed in Reactant.jl)
 Base.conj(@nospecialize(x::Tensor{<:TracedRNumber})) = x
 Base.conj(@nospecialize(x::Tensor{TracedRNumber{T}})) where {T<:Complex} = Tensor(conj(parent(x)), inds(x))
+
+function __init__()
+    Reactant.@skip_rewrite_func Muscle.binary_einsum
+    Reactant.@skip_rewrite_func Muscle.nonunique
+    Reactant.@skip_rewrite_type Type{<:Muscle.Index}
+    Reactant.@skip_rewrite_type Type{<:Muscle.Tensor}
+end
 
 end
