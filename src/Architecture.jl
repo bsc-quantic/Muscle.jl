@@ -1,6 +1,5 @@
 using ArgCheck
 using Adapt
-#using CUDA
 using LinearAlgebra: LinearAlgebra
 
 abstract type Vendor end
@@ -10,7 +9,6 @@ struct NVIDIA <: Vendor end
 
 abstract type MemorySpace end
 struct CPUMemorySpace <: MemorySpace end
-struct CUDAMemorySpace <: MemorySpace end
 struct ReactantMemorySpace <: MemorySpace end
 
 memory_space(::T) where {T<:AbstractArray} = memory_space(T)
@@ -24,7 +22,6 @@ struct GPU <: Architecture end
 
 arch(x::AbstractArray) = arch(memory_space(x))
 arch(::CPUMemorySpace) = CPU()
-arch(::CUDAMemorySpace) = GPU()
 
 # TODO promote memspace
 function promote_memspace(a, b)

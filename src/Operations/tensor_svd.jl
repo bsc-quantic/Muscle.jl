@@ -108,27 +108,3 @@ function tensor_svd_thin!(::BackendBase, U::Tensor, s::Tensor, V::Tensor, A::Ten
 
     return U, s, V
 end
-
-## `cuTensorNet`
-# function tensor_svd_thin(arch::GPU, A::Tensor; kwargs...)
-#     U, s, V = allocate_result(tensor_svd_thin, A; kwargs...)
-#     tensor_svd_thin!(arch, A, U, s, V; kwargs...)
-# end
-
-function tensor_svd_thin!(::BackendCuTensorNet, U::Tensor, s::Tensor, V::Tensor, A::Tensor; kwargs...)
-    tensor_svd_thin!(
-        BackendCuTensorNet(), parent(U), inds(U), parent(s), parent(V), inds(V), parent(A), inds(A); kwargs...
-    )
-end
-
-function tensor_svd_thin!(::BackendCuTensorNet, U, inds_u, s, V, inds_v, A, inds_a; kwargs...)
-    modemap = Dict{Index,Int}(ind => i for (i, ind) in enumerate(unique(inds_a ∪ inds_u ∪ inds_v)))
-    modes_a = [modemap[ind] for ind in inds(A)]
-    modes_u = [modemap[ind] for ind in inds(U)]
-    modes_v = [modemap[ind] for ind in inds(V)]
-
-    # call to cuTensorNet SVD method is implemented as `LinearAlgebra.svd!`
-    LinearAlgebra.svd!(A, modes_a, U, modes_u, s, V, modes_v; kwargs...)
-
-    return u, s, v
-end
