@@ -24,5 +24,7 @@ end
     #     include("integration/Dagger_test.jl")
 end
 
+@testset "ITensors conversion" include("integration/itensors.jl")
+
 # using Aqua
 # Aqua.test_all(Muscle)
