@@ -1,9 +1,15 @@
-@testset "ITensors" begin
-    using ITensors: ITensors, ITensor, Index, array
+using Test
+using Muscle
+using ITensors: ITensor, array
+using ITensors: Index as iIndex 
+using ITensors: inds as iinds
+using ITensors: tags as itags
 
-    i = Index(2, "i")
-    j = Index(3, "j")
-    k = Index(4, "k")
+@testset "ITensors" begin
+
+    i = iIndex(2, "i")
+    j = iIndex(3, "j")
+    k = iIndex(4, "k")
 
     itensor = ITensor(rand(2, 3, 4), i, j, k)
 
@@ -19,7 +25,7 @@
     @test array(itensor) == parent(tensor)
     @test all(
         splat(==),
-        zip(map(x -> replace(x, "\"" => ""), string.(ITensors.tags.(ITensors.inds(itensor)))), ["i", "j", "k"]),
+        zip(map(x -> replace(x, "\"" => ""), string.(itags.(iinds(itensor)))), ["i", "j", "k"]),
     )
 
     # tn = rand(TensorNetwork, 4, 3)
