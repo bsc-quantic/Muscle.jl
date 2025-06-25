@@ -21,7 +21,11 @@ makedocs(;
         assets=String[],
     ),
     pages=[
-        "Home" => "index.md", "Tensors" => "tensors.md", "Operators" => ["Contraction" => "operations/contraction.md"]
+        "Home" => "index.md",
+        "Tensors" => "tensors.md",
+        "Operations" =>
+            ["Contraction" => "operations/contraction.md", "SVD" => "operations/svd.md", "QR" => "operations/qr.md"],
+        "API" => "api.md",
     ],
 )
 

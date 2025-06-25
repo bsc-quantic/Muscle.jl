@@ -49,7 +49,7 @@ C_{ik} = \sum_j A_{ij} B_{jk}
 
 In `Muscle`, a tensor is represented by the `Tensor` type, which wraps an array and a list of [`Index`](@ref). An [`Index`](@ref) is wrapper type that can fit anything in it.
 
-```@repl
+```@repl tensor
 Index(:i)
 Index(1)
 Index((1,2))
@@ -61,11 +61,11 @@ You can create a `Tensor` by passing an `AbstractArray` and a `Vector` or `Tuple
 t = Tensor(rand(3,5,2), [Index(:i), Index(:j), Index(:k)])
 ```
 
-> [!TIP]
-> For backward compatibility, if all the indices are `Index{Symbol}`s, you can directly pass a list of `Symbols` to the `Tensor` constructor. For example,
-> ```@repl tensor
-> Tensor(rand(3,5,2), [:i, :j, :k])
-> ```
+!!! tip
+    For backward compatibility, if all the indices are `Index{Symbol}`s, you can directly pass a list of `Symbols` to the `Tensor` constructor. For example,
+    ```@repl tensor
+    Tensor(rand(3,2), [:i, :j])
+    ```
 
 Use `parent` and `inds` to access the underlying array and indices respectively.
 
@@ -78,7 +78,7 @@ The _dimensionality_ or size of each index can be consulted using the `size` fun
 
 ```@repl tensor
 size(t)
-size(t, :j)
+size(t, Index(:j))
 length(t)
 ```
 

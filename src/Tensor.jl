@@ -48,6 +48,11 @@ function Tensor{T,N,A}(data::A, inds::Vector{Symbol}) where {T,N,A<:AbstractArra
     Tensor(data, ImmutableVector(map(Index, inds)))
 end
 
+"""
+    inds(::Tensor)
+
+Return the indices of the `Tensor`.
+"""
 inds(x::Tensor) = x.inds
 
 Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
