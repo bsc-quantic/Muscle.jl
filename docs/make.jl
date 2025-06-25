@@ -20,7 +20,9 @@ makedocs(;
         edit_link="master",
         assets=String[],
     ),
-    pages=["Home" => "index.md"],
+    pages=[
+        "Home" => "index.md", "Tensors" => "tensors.md", "Operators" => ["Contraction" => "operations/contraction.md"]
+    ],
 )
 
 deploydocs(; repo="github.com/bsc-quantic/Muscle.jl", devbranch="master")
