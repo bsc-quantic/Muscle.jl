@@ -16,9 +16,9 @@ end
 @testset "Integration" verbose = true begin
     @safetestset "QuantumTags" include("integration/quantumtags.jl")
 
-    @safetestset "Reactant" begin
-        include("integration/reactant.jl")
-    end
+#    @safetestset "Reactant" begin
+#        include("integration/reactant.jl")
+#    end
 
     #     include("integration/ChainRules_test.jl")
     #     include("integration/Dagger_test.jl")

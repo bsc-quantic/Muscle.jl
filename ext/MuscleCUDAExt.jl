@@ -3,12 +3,12 @@ module MuscleCUDAExt
 using CUDA
 using cuTENSOR
 using Muscle
-import Muscle: binary_einsum, binary_einsum!, BackendCuTENSOR
+import Muscle: binary_einsum, binary_einsum!, BackendCuTENSOR, choose_backend_rule, memory_space
 
 memory_space(::Type{<:CuArray}) = CUDAMemorySpace()
 
-choose_backend_rule(::typeof(binary_einsum), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTENSOR()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTENSOR()
+Muscle.choose_backend_rule(::typeof(binary_einsum), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTENSOR()
+Muscle.choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTENSOR()
 function choose_backend_rule(::typeof(binary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}, ::Type{<:CuArray})
     BackendCuTENSOR()
 end

@@ -1,6 +1,8 @@
 using Test
-using Muscle: Tensor, Index
+using Muscle
+using Muscle: Tensor, Index, binary_einsum 
 using CUDA
+using cuTENSOR
 
 @testset "matmul" begin
     A = Tensor(CUDA.ones(2, 3), [Index(:i), Index(:j)])
@@ -9,25 +11,26 @@ using CUDA
     C = binary_einsum(A, B)
     @test inds(C) == [Index(:i), Index(:k)]
     @test size(C) == (2, 4)
-    @test parent(C) == 3 * CUDA.ones(2, 4)
+    @test @allowscalar parent(C) == 3 * ones(2, 4)
 
     # specifying output inds
     C = binary_einsum(A, B; out=[Index(:i), Index(:k)])
     @test inds(C) == [Index(:i), Index(:k)]
     @test size(C) == (2, 4)
-    @test parent(C) == 3 * CUDA.ones(2, 4)
+    @test @allowscalar parent(C) == 3 * ones(2, 4)
 
     # permuting output inds
     C = binary_einsum(A, B; out=[Index(:k), Index(:i)])
+    @show typeof(C)
     @test inds(C) == [Index(:k), Index(:i)]
     @test size(C) == (4, 2)
-    @test parent(C) == 3 * CUDA.ones(4, 2)
+    @test @allowscalar parent(C) == 3 * ones(4, 2)
 
     # specifying contracting inds
     C = binary_einsum(A, B; dims=[Index(:j)])
     @test inds(C) == [Index(:i), Index(:k)]
     @test size(C) == (2, 4)
-    @test parent(C) == 3 * CUDA.ones(2, 4)
+    @test @allowscalar parent(C) == 3 * ones(2, 4)
 end
 
 @testset "inner product" begin
@@ -37,25 +40,25 @@ end
     C = binary_einsum(A, B)
     @test isempty(inds(C))
     @test size(C) == ()
-    @test parent(C) == fill(12)
+    @test @allowscalar parent(C) == fill(12)
 
     # specifying output inds
     C = binary_einsum(A, B; out=Index[])
     @test isempty(inds(C))
     @test size(C) == ()
-    @test parent(C) == fill(12)
+    @test @allowscalar parent(C) == fill(12)
 
     # specifying contracting inds
     C = binary_einsum(A, B; dims=[Index(:i), Index(:j)])
     @test isempty(inds(C))
     @test size(C) == ()
-    @test parent(C) == fill(12)
+    @test @allowscalar parent(C) == fill(12)
 
     # permutation contracting inds shouldn't matter
     C = binary_einsum(A, B; dims=[Index(:j), Index(:i)])
     @test isempty(inds(C))
     @test size(C) == ()
-    @test parent(C) == fill(12)
+    @test @allowscalar parent(C) == fill(12)
 end
 
 @testset "outer product" begin
