@@ -1,9 +1,10 @@
 module MusclecuTensorNetExt
 
-
+using ArgCheck
 using CUDA
 using cuTensorNet: cuTensorNet
 using Muscle
+using Muscle: AbsorbBehavior, BackendCuTensorNet
 
 
 # TODO customize SVD algorithm

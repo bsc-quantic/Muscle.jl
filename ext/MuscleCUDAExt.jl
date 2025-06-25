@@ -1,11 +1,9 @@
 module MuscleCUDAExt
 
-
 using CUDA
-using cuTensor
-using cuTensorNet: cuTensorNet
+using cuTENSOR
 using Muscle
-
+import Muscle: binary_einsum, binary_einsum!, BackendCuTENSOR
 
 memory_space(::Type{<:CuArray}) = CUDAMemorySpace()
 
