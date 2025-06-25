@@ -1,12 +1,11 @@
 using Test
 using Muscle
 using ITensors: ITensor, array
-using ITensors: Index as iIndex 
+using ITensors: Index as iIndex
 using ITensors: inds as iinds
 using ITensors: tags as itags
 
 @testset "ITensors" begin
-
     i = iIndex(2, "i")
     j = iIndex(3, "j")
     k = iIndex(4, "k")
@@ -23,10 +22,7 @@ using ITensors: tags as itags
     @test itensor isa ITensor
     @test size(itensor) == (2, 3, 4)
     @test array(itensor) == parent(tensor)
-    @test all(
-        splat(==),
-        zip(map(x -> replace(x, "\"" => ""), string.(itags.(iinds(itensor)))), ["i", "j", "k"]),
-    )
+    @test all(splat(==), zip(map(x -> replace(x, "\"" => ""), string.(itags.(iinds(itensor)))), ["i", "j", "k"]))
 
     # tn = rand(TensorNetwork, 4, 3)
     # itensors = convert(Vector{ITensor}, tn)

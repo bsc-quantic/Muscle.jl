@@ -83,4 +83,3 @@ function binary_einsum!(::BackendOMEinsum, c, inds_c, a, inds_a, b, inds_b)
     OMEinsum.einsum!((inds_a, inds_b), inds_c, (a, b), c, true, false, size_dict)
     return c
 end
-

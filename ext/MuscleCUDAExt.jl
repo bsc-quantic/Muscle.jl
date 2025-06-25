@@ -32,9 +32,6 @@ function choose_backend_rule(
     BackendCuTensorNet()
 end
 
-
-
-
 ## `CUDA` (uses cuTENSOR)
 function binary_einsum(::BackendCuTENSOR, inds_c, a, inds_a, b, inds_b; kwargs...)
     size_dict = Dict{Index,Int}()

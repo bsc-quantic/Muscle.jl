@@ -6,7 +6,6 @@ using cuTensorNet: cuTensorNet
 using Muscle
 using Muscle: AbsorbBehavior, BackendCuTensorNet
 
-
 # TODO customize SVD algorithm
 # TODO configure GPU stream
 # TODO cache workspace memory
@@ -105,7 +104,6 @@ function simple_update(
     end
 end
 
-
 ## `cuTensorNet`
 function tensor_qr_thin(
     ::BackendCuTensorNet, A::Tensor; inds_q=(), inds_r=(), ind_virtual=Index(gensym(:qr)), inplace=false, kwargs...
@@ -144,8 +142,6 @@ function tensor_qr_thin!(::BackendCuTensorNet, Q, inds_q, R, inds_r, A, inds_a; 
 
     return Q, R
 end
-
-
 
 ## `cuTensorNet`
 # function tensor_svd_thin(arch::GPU, A::Tensor; kwargs...)
