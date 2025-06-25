@@ -15,20 +15,21 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
+ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 QuantumTags = "2406e0f5-9e5e-4424-966e-8bc9c78b228f"
 Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 cuTENSOR = "011b41b2-24ef-40a8-b3eb-fa098493e9e1"
 cuTensorNet = "448d79b3-4b49-4e06-a5ea-00c62c0dc3db"
-ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 
 
 [extensions]
-MuscleCUDAExt = "CUDA"
+MuscleCUDAExt = ["CUDA","cuTENSOR"]
 MuscleChainRulesCoreExt = "ChainRulesCore"
 MuscleDaggerExt = "Dagger"
 MuscleQuantumTagsExt = "QuantumTags"
 MuscleReactantExt = "Reactant"
 MuscleITensorsExt = "ITensors"
+MusclecuTensorNetExt = ["CUDA","cuTensorNet"]
 
 [compat]
 Adapt = "4"
