@@ -25,7 +25,7 @@ end
 
     @safetestset "ITensors" include("integration/itensors.jl")
 
-    if ENV["MUSCLE_TEST_CUDA"] == "true"
+    if !isnothing(get(ENV, "MUSCLE_TEST_CUDA", nothing))
         @safetestset "CUDA" include("integration/cuda.jl")
     end
 end
