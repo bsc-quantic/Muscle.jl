@@ -22,9 +22,13 @@ end
 
     #     include("integration/ChainRules_test.jl")
     #     include("integration/Dagger_test.jl")
-end
 
-@testset "ITensors conversion" include("integration/itensors.jl")
+    @safetestset "ITensors" include("integration/itensors.jl")
+
+    if ENV["MUSCLE_TEST_CUDA"] == "true"
+        @safetestset "CUDA" include("integration/cuda.jl")
+    end
+end
 
 # using Aqua
 # Aqua.test_all(Muscle)

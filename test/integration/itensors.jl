@@ -23,12 +23,4 @@ using ITensors: tags as itags
     @test size(itensor) == (2, 3, 4)
     @test array(itensor) == parent(tensor)
     @test all(splat(==), zip(map(x -> replace(x, "\"" => ""), string.(itags.(iinds(itensor)))), ["i", "j", "k"]))
-
-    # tn = rand(TensorNetwork, 4, 3)
-    # itensors = convert(Vector{ITensor}, tn)
-    # @test itensors isa Vector{ITensor}
-
-    # tnr = convert(TensorNetwork, itensors)
-    # @test tnr isa TensorNetwork
-    # @test issetequal(arrays(tn), arrays(tnr))
 end
