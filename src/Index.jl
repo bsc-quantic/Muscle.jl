@@ -9,6 +9,12 @@ Base.copy(x::Index) = x
 
 Index(name::String) = Index(Symbol(name))
 
+function Base.show(io::IO, ind::Index)
+    print(io, "index<")
+    print(io, ind.tag)
+    print(io, ">")
+end
+
 # index management
 function findperm(from::AbstractVector{I}, to::AbstractVector{I}) where {I<:Index}
     @assert issetequal(from, to)
