@@ -62,6 +62,8 @@ function factorinds(all_inds, left_inds, right_inds)
         Index[]
     elseif left_inds isa Tuple
         Index[ind for ind in left_inds]
+    elseif left_inds isa Vector{<:Index} && !(left_inds isa Vector{Index})
+        convert(Vector{Index}, left_inds)
     else
         left_inds
     end
@@ -72,6 +74,8 @@ function factorinds(all_inds, left_inds, right_inds)
         Index[]
     elseif right_inds isa Tuple
         Index[ind for ind in right_inds]
+    elseif right_inds isa Vector{<:Index} && !(right_inds isa Vector{Index})
+        convert(Vector{Index}, right_inds)
     else
         right_inds
     end
