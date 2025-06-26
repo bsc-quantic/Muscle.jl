@@ -2,8 +2,6 @@ struct Index{T}
     tag::T
 end
 
-const NamedIndex = Index{Symbol}
-
 # TODO checkout whether this is a good idea
 Base.copy(x::Index) = x
 

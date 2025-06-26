@@ -138,7 +138,7 @@ Adapt.parent_type(::T) where {T<:Tensor} = parent_type(T)
 Return the location of the dimension of `tensor` corresponding to the given index `i`.
 """
 dim(::Tensor, i::Number) = i
-dim(t::Tensor, i::Symbol) = dim(t, NamedIndex(i))
+dim(t::Tensor, i::Symbol) = dim(t, Index(i))
 dim(t::Tensor, i::Index) = findfirst(==(i), inds(t))
 
 # Iteration interface
