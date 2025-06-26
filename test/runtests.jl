@@ -22,6 +22,12 @@ end
 
     #     include("integration/ChainRules_test.jl")
     #     include("integration/Dagger_test.jl")
+
+    @safetestset "ITensors" include("integration/itensors.jl")
+
+    if !isnothing(get(ENV, "MUSCLE_TEST_CUDA", nothing))
+        @safetestset "CUDA" include("integration/cuda.jl")
+    end
 end
 
 # using Aqua

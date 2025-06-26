@@ -6,25 +6,29 @@ version = "0.3.6"
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 EinExprs = "b1794770-133b-4de1-afb4-526377e9f4c5"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
+[weakdeps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
+ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
+QuantumTags = "2406e0f5-9e5e-4424-966e-8bc9c78b228f"
+Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
 cuTENSOR = "011b41b2-24ef-40a8-b3eb-fa098493e9e1"
 cuTensorNet = "448d79b3-4b49-4e06-a5ea-00c62c0dc3db"
 
-[weakdeps]
-ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
-QuantumTags = "2406e0f5-9e5e-4424-966e-8bc9c78b228f"
-Reactant = "3c362404-f566-11ee-1572-e11a4b42c853"
-
 [extensions]
+MuscleCUDAExt = ["CUDA", "cuTENSOR"]
 MuscleChainRulesCoreExt = "ChainRulesCore"
 MuscleDaggerExt = "Dagger"
+MuscleITensorsExt = "ITensors"
 MuscleQuantumTagsExt = "QuantumTags"
 MuscleReactantExt = "Reactant"
+MusclecuTensorNetExt = ["CUDA", "cuTensorNet"]
 
 [compat]
 Adapt = "4"
@@ -33,6 +37,7 @@ CUDA = "5.7.0"
 ChainRulesCore = "1.0"
 Dagger = "0.18"
 EinExprs = "0.6.8"
+ITensors = "0.9"
 LinearAlgebra = "1.10"
 OMEinsum = "0.8"
 QuantumTags = "0.1.4"

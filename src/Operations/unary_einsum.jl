@@ -1,5 +1,4 @@
 using OMEinsum
-using CUDA
 
 """
     unary_einsum(a::Tensor; dims=∩(inds(a), inds(b)), out=nothing)
@@ -21,9 +20,7 @@ Perform a unary tensor contraction operation on `a` and store the result in `c`.
 function unary_einsum! end
 
 choose_backend_rule(::typeof(unary_einsum), ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(unary_einsum), ::Type{<:CuArray}) = BackendOMEinsum()
 choose_backend_rule(::typeof(unary_einsum!), ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(unary_einsum!), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendOMEinsum()
 
 function unary_einsum(x::Tensor; dims=nonunique(inds(x)), out=nothing)
     inds_sum = ∩(dims, inds(x))
