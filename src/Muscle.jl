@@ -24,6 +24,10 @@ export tensor_qr_thin, tensor_qr_thin!
 include("Operations/tensor_svd.jl")
 export tensor_svd_thin, tensor_svd_thin!
 
+include("Operations/tensor_eigen.jl")
+export tensor_eigen_thin, tensor_eigen_thin!
+export tensor_bieigen_thin, tensor_bieigen_thin!
+
 include("Operations/simple_update.jl")
 export simple_update, simple_update!
 
