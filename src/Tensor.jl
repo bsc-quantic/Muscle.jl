@@ -58,6 +58,9 @@ inds(x::Tensor) = x.inds
 Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
 Adapt.adapt_structure(to, x::Tensor) = Tensor(adapt(to, parent(x)), inds(x))
 
+arraytype(::Type{Tensor{T,N,A}}) where {T,N,A} = A
+arraytype(::T) where {T<:Tensor} = arraytype(T)
+
 """
     Base.similar(::Tensor{T,N}[, S::Type, dims::Base.Dims{N}; inds])
 
