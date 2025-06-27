@@ -16,6 +16,8 @@ end
 @testset "Integration" verbose = true begin
     @safetestset "QuantumTags" include("integration/quantumtags.jl")
 
+    @safetestset "KrylovKit" include("integration/KrylovKit_test.jl")
+
     @safetestset "Reactant" begin
         include("integration/reactant.jl")
     end
