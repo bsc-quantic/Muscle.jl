@@ -1,26 +1,30 @@
 module MuscleStridedExt
 
 using Muscle
+using Muscle: BackendStrided
+using Strided
+using StridedViews
+using ArgCheck
 
-function choose_backend_rule(::typeof(binary_einsum), ::Type{<:StridedView}, ::Type{<:Array})
+function Muscle.choose_backend_rule(::typeof(binary_einsum), ::Type{<:StridedView}, ::Type{<:Array})
     BackendStrided()
 end
 
-function choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:StridedView})
+function Muscle.choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:StridedView})
     BackendStrided()
 end
 
-function choose_backend_rule(::typeof(binary_einsum), ::Type{<:StridedView}, ::Type{<:StridedView})
+function Muscle.choose_backend_rule(::typeof(binary_einsum), ::Type{<:StridedView}, ::Type{<:StridedView})
     BackendStrided()
 end
 
-function choose_backend_rule(
+function Muscle.choose_backend_rule(
     ::typeof(binary_einsum!), ::Type{<:StridedView}, ::Type{<:StridedView}, ::Type{<:StridedView}
 )
     BackendStrided()
 end
 
-function binary_einsum(::BackendStrided, inds_c, a::Tensor, b::Tensor)
+function Muscle.binary_einsum(::BackendStrided, inds_c, a::Tensor, b::Tensor)
     binary_einsum(
         BackendStrided(),
         inds_c,
@@ -29,7 +33,7 @@ function binary_einsum(::BackendStrided, inds_c, a::Tensor, b::Tensor)
     )
 end
 
-function binary_einsum(
+function Muscle.binary_einsum(
     ::BackendStrided, inds_c, a::Tensor{Ta,Na,<:StridedView}, b::Tensor{Tb,Nb,<:StridedView}
 ) where {Ta,Tb,Na,Nb}
     inds_contract = inds(a) ∩ inds(b)
@@ -58,7 +62,7 @@ function binary_einsum(
     return sc
 end
 
-function binary_einsum!(
+function Muscle.binary_einsum!(
     ::BackendStrided, c::Tensor{Tc,Nc,<:StridedView}, a::Tensor{Ta,Na,<:StridedView}, b::Tensor{Tb,Nb,<:StridedView}
 ) where {Tc,Nc,Ta,Tb,Na,Nb}
     inds_contract = inds(a) ∩ inds(b)

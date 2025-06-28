@@ -1,6 +1,7 @@
 module MuscleOMEinsumExt
 
 using Muscle
+using Muscle: BackendOMEinsum
 using OMEinsum
 
 # TODO add a preference system for some backends
