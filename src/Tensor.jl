@@ -271,6 +271,10 @@ function Base.permutedims(t::Tensor, perm)
     Tensor(permutedims(parent(t), perm), _inds)
 end
 
+# shortcut for 0-dimensional tensors
+Base.permutedims(t::Tensor{T,0}, _) where {T} = t
+Base.permutedims(t::Tensor{T,0}, ::Base.AbstractVecOrTuple{Index}) where {T} = t
+
 Base.permutedims!(dest::Tensor, src::Tensor, perm) = permutedims!(parent(dest), parent(src), perm)
 
 function Base.permutedims(t::Tensor{T}, perm::Base.AbstractVecOrTuple{Index}) where {T}

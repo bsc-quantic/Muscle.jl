@@ -1,7 +1,7 @@
 module MuscleStridedExt
 
 using Muscle
-using Muscle: BackendStrided
+using Muscle: BackendStrided, arraytype
 using Strided
 using StridedViews
 using ArgCheck
