@@ -26,12 +26,11 @@ function unary_einsum(x::Tensor; dims=nonunique(inds(x)), out=nothing)
     end
 
     backend = choose_backend(unary_einsum, parent(x))
-    data_y = unary_einsum(backend, inds_y, parent(x), inds(x))
-    return Tensor(data_y, inds_y)
+    return unary_einsum(backend, inds_y, x)
 end
 
 function unary_einsum!(y::Tensor, x::Tensor)
     backend = choose_backend(unary_einsum!, parent(y), parent(x))
-    unary_einsum!(backend, parent(y), inds(y), parent(x), inds(x))
+    unary_einsum!(backend, y, x)
     return y
 end

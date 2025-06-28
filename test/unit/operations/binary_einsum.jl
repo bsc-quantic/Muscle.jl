@@ -1,6 +1,5 @@
 using Test
-using Muscle: Tensor, Index
-# TODO test on NVIDIA GPU
+using Muscle
 
 @testset "matmul" begin
     A = Tensor(ones(2, 3), [Index(:i), Index(:j)])

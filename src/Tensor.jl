@@ -48,6 +48,17 @@ function Tensor{T,N,A}(data::A, inds::Vector{Symbol}) where {T,N,A<:AbstractArra
     Tensor(data, ImmutableVector(map(Index, inds)))
 end
 
+Tensor(x::Tensor) = x
+Tensor{T,N,A}(x::Tensor{T,N,A}) where {T,N,A} = x
+function Tensor{T,N,A}(x::Tensor) where {T,N,A}
+    throw(ArgumentError("Tensor type mismatch: $(typeof(x)) is not a Tensor{T,N,A}"))
+end
+
+Tensor(::Tensor, _) = throw(ArgumentError("Can't wrap a `Tensor` with another `Tensor`"))
+function Tensor{T,N,A}(::Tensor, _) where {T,N,A}
+    throw(ArgumentError("Can't wrap a `Tensor` with another `Tensor`"))
+end
+
 """
     inds(::Tensor)
 
