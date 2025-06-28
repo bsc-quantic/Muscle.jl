@@ -28,8 +28,8 @@ end
         @safetestset "CUDA" include("integration/cuda.jl")
     end
 
-    @safetestset "Reactant" begin
-        include("integration/reactant.jl")
+    if !isnothing(get(ENV, "MUSCLE_TEST_REACTANT", nothing))
+        @safetestset "Reactant" include("integration/reactant.jl")
     end
 end
 
