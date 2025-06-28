@@ -45,7 +45,7 @@ op_cx = Tensor(
     @test V ≈ Γb
     @test s == Tensor([1.0, 1.0], [Index((; bond=(1, 2)))])
 
-    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    ψ = Muscle.binary_einsum(Muscle.hadamard(U, s), V)
     @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 2.0
 end
 
@@ -65,7 +65,7 @@ end
     @test V ≈ Tensor(1 / √2 * [1 -1; 1 1], [Index((; site=2, cut=1)), Index((; bond=(1, 2)))])
     @test s == Tensor([√2, 0.0], [Index((; bond=(1, 2)))])
 
-    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    ψ = Muscle.binary_einsum(Muscle.hadamard(U, s), V)
     @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 2.0
 end
 
@@ -86,7 +86,7 @@ end
     @test V ≈ Γb
     @test s ≈ Tensor([1 / √2, 1 / √2], [Index((; bond=(1, 2)))])
 
-    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    ψ = Muscle.binary_einsum(Muscle.hadamard(U, s), V)
     @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 1.0
 end
 
@@ -107,7 +107,7 @@ end
     @test V ≈ Tensor(1 / √2 * [1 -1; 1 1], [Index((; site=2, cut=1)), Index((; bond=(1, 2)))])
     @test s == Tensor([1.0, 0.0], [Index((; bond=(1, 2)))])
 
-    ψ = Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V)
+    ψ = Muscle.binary_einsum(Muscle.hadamard(U, s), V)
     @test Muscle.binary_einsum(ψ, conj(ψ)) |> only ≈ 1.0
 end
 
