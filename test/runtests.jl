@@ -15,10 +15,8 @@ end
 
 @testset "Integration" verbose = true begin
     @safetestset "QuantumTags" include("integration/quantumtags.jl")
-
-    @safetestset "Reactant" begin
-        include("integration/reactant.jl")
-    end
+    @safetestset "OMEinsum" include("integration/omeinsum.jl")
+    @safetestset "Strided" include("integration/strided.jl")
 
     #     include("integration/ChainRules_test.jl")
     #     include("integration/Dagger_test.jl")
@@ -27,6 +25,10 @@ end
 
     if !isnothing(get(ENV, "MUSCLE_TEST_CUDA", nothing))
         @safetestset "CUDA" include("integration/cuda.jl")
+    end
+
+    @safetestset "Reactant" begin
+        include("integration/reactant.jl")
     end
 end
 

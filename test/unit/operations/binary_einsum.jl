@@ -119,31 +119,18 @@ end
     @test parent(C) == α[] .* transpose(parent(A))
 end
 
+# hyperindices not supported on BackendBase
 @testset "batch matmul" begin
     A = Tensor(ones(2, 3, 6), [Index(:i), Index(:j), Index(:batch)])
     B = Tensor(ones(3, 4, 6), [Index(:j), Index(:k), Index(:batch)])
 
     # specifying output inds
-    C = binary_einsum(A, B; out=[Index(:i), Index(:k), Index(:batch)])
-    @test inds(C) == [Index(:i), Index(:k), Index(:batch)]
-    @test size(C) == (2, 4, 6)
-    @test parent(C) == 3 * ones(2, 4, 6)
-
-    C = binary_einsum(A, B; out=[Index(:k), Index(:i), Index(:batch)])
-    @test inds(C) == [Index(:k), Index(:i), Index(:batch)]
-    @test size(C) == (4, 2, 6)
-    @test parent(C) == 3 * ones(4, 2, 6)
-
-    C = binary_einsum(A, B; out=[Index(:batch), Index(:i), Index(:k)])
-    @test inds(C) == [Index(:batch), Index(:i), Index(:k)]
-    @test size(C) == (6, 2, 4)
-    @test parent(C) == 3 * ones(6, 2, 4)
+    @test_throws ArgumentError binary_einsum(A, B; out=[Index(:i), Index(:k), Index(:batch)])
+    @test_throws ArgumentError binary_einsum(A, B; out=[Index(:k), Index(:i), Index(:batch)])
+    @test_throws ArgumentError binary_einsum(A, B; out=[Index(:batch), Index(:i), Index(:k)])
 
     # specifying contracting inds
-    C = binary_einsum(A, B; dims=[Index(:j)])
-    @test inds(C) == [Index(:i), Index(:k), Index(:batch)] broken = true
-    @test size(C) == (2, 4, 6) broken = true
-    @test parent(C) == 3 * ones(2, 4, 6) broken = true
+    @test_throws ArgumentError binary_einsum(A, B; dims=[Index(:j)])
 end
 
 @testset "manual" begin
@@ -163,16 +150,7 @@ end
         end
 
         # contraction of NOT all common indices
-        C = binary_einsum(A, B; dims=[Index(:j)])
-
-        @test inds(C) == [Index(:i), Index(:k), Index(:l)]
-        @test size(C) == (2, 4, 5)
-        @test parent(C) ≈ begin
-            C = zeros(2, 4, 5)
-            for i in 1:2, j in 1:3, k in 1:4, l in 1:5
-                C[i, k, l] += A[i, j, k] * B[k, l, j]
-            end
-            C
-        end
+        # hyperindices not supported on BackendBase
+        @test_throws ArgumentError binary_einsum(A, B; dims=[Index(:j)])
     end
 end

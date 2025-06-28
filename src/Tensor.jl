@@ -252,7 +252,14 @@ Base.selectdim(t::Tensor, d, i) = selectdim(t, dim(t, d), i)
 
 Permute the dimensions of `tensor` according to the given permutation `perm`. The [`inds`](@ref) will be permuted accordingly.
 """
-Base.permutedims(t::Tensor, perm) = Tensor(permutedims(parent(t), perm), getindex.((inds(t),), perm))
+function Base.permutedims(t::Tensor, perm)
+    _inds = Index[]
+    for i in perm
+        push!(_inds, inds(t)[i])
+    end
+    Tensor(permutedims(parent(t), perm), _inds)
+end
+
 Base.permutedims!(dest::Tensor, src::Tensor, perm) = permutedims!(parent(dest), parent(src), perm)
 
 function Base.permutedims(t::Tensor{T}, perm::Base.AbstractVecOrTuple{Index}) where {T}

@@ -29,9 +29,7 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
         out
     end
 
-    data_a = parent(a)
-    data_b = parent(b)
-    backend = choose_backend(binary_einsum, data_a, data_b)
+    backend = choose_backend(binary_einsum, parent(a), parent(b))
     # if ismissing(backend)
     #     @warn "No backend found for binary_einsum(::$(typeof(a)), ::$(typeof(b))), so unwrapping data"
     #     data_a = collect(data_a)
@@ -63,8 +61,8 @@ function binary_einsum(::BackendBase, inds_c, a::Tensor, b::Tensor)
     inds_right = setdiff(inds(b), inds_contract)
 
     # can't deal with hyperindices
-    @argcheck isdisjoint(inds_c, inds_contract)
-    @argcheck issetequal(inds_c, symdiff(inds(a), inds(b)))
+    @argcheck isdisjoint(inds_c, inds_contract) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
+    @argcheck issetequal(inds_c, symdiff(inds(a), inds(b))) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
 
     sizes_left = map(Base.Fix1(size, a), inds_left)
     sizes_right = map(Base.Fix1(size, b), inds_right)
@@ -85,12 +83,8 @@ function binary_einsum!(::BackendBase, c::Tensor, a::Tensor, b::Tensor)
     inds_right = setdiff(inds(b), inds_contract)
 
     # can't deal with hyperindices
-    @argcheck isdisjoint(inds(c), inds_contract) """
-        `BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead.
-    """
-    @argcheck issetequal(inds(c), symdiff(inds(a), inds(b))) """
-        `BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead.
-    """
+    @argcheck isdisjoint(inds(c), inds_contract) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
+    @argcheck issetequal(inds(c), symdiff(inds(a), inds(b))) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
 
     # can't deal with inplace permutedims
     @argcheck inds(c) == [inds_left; inds_right]
