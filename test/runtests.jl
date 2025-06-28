@@ -5,6 +5,7 @@ using SafeTestsets
 @testset "Unit" verbose = true begin
     @testset "Tensor" include("unit/tensor.jl")
     @testset "Operations" verbose = true begin
+        @testset "hadamard" include("unit/operations/hadamard.jl")
         @testset "unary_einsum" include("unit/operations/unary_einsum.jl")
         @testset "binary_einsum" include("unit/operations/binary_einsum.jl")
         @testset "tensor_qr_thin" include("unit/operations/tensor_qr_thin.jl")
