@@ -1,6 +1,7 @@
 module MuscleReactantExt
 
 using Muscle
+using Muscle: BackendReactant
 using Reactant
 using Reactant: TracedRNumber, TracedRArray
 const MLIR = Reactant.MLIR
@@ -8,15 +9,6 @@ const stablehlo = MLIR.Dialects.stablehlo
 
 Muscle.memory_space(::Type{<:TracedRArray}) = Muscle.ReactantMemorySpace()
 Muscle.memory_space(::Type{<:Reactant.AnyConcreteRArray}) = Muscle.ReactantMemorySpace()
-
-Base.Base.@nospecializeinfer function Muscle.choose_backend(
-    ::typeof(Muscle.binary_einsum!),
-    @nospecialize(_::TracedRArray),
-    @nospecialize(_::TracedRArray),
-    @nospecialize(_::TracedRArray)
-)
-    Muscle.BackendReactant()
-end
 
 # we specify `mode` and `track_numbers` types due to ambiguity
 Base.@nospecializeinfer function Reactant.traced_type_inner(
@@ -65,32 +57,57 @@ Base.@nospecializeinfer function Reactant.traced_type_inner(
     return Tensor{T_traced,N,A_traced}
 end
 
-# function Reactant.Compiler.make_tracer(
-#     seen, @nospecialize(prev::RT), @nospecialize(path), mode; kwargs...
-# ) where {RT<:Tensor}
-#     traced_data = Reactant.Compiler.make_tracer(seen, parent(prev), Reactant.append_path(path, :data), mode; kwargs...)
-#     return Tensor(traced_data, inds(prev))
-# end
-
-# function Reactant.Compiler.create_result(@nospecialize(tocopy::Tensor), @nospecialize(path), args...)
-#     data = Reactant.Compiler.create_result(parent(tocopy), Reactant.append_path(path, :data), args...)
-#     return :($Tensor($data, $(inds(tocopy))))
-# end
-
-Muscle.memory_space(@nospecialize(_::TracedRArray)) = Muscle.ReactantMemorySpace()
-Muscle.memory_space(@nospecialize(_::Reactant.AnyConcreteRArray)) = Muscle.ReactantMemorySpace()
+Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
+    ::typeof(Muscle.binary_einsum!),
+    @nospecialize(_::TracedRArray),
+    @nospecialize(_::TracedRArray),
+    @nospecialize(_::TracedRArray)
+)
+    Muscle.BackendReactant()
+end
 
 function Muscle.unary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}); dims=nonunique(inds(a)), out=nothing) where {T}
     error("compilation of `Muscle.unary_einsum` is not yet supported")
 end
 
+Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
+    ::typeof(Muscle.binary_einsum),
+    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
+    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
+)
+    Muscle.BackendReactant()
+end
+
+Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
+    ::typeof(Muscle.binary_einsum),
+    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
+    @nospecialize(_::Type{<:AbstractArray}),
+)
+    Muscle.BackendReactant()
+end
+
+Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
+    ::typeof(Muscle.binary_einsum),
+    @nospecialize(_::Type{<:AbstractArray}),
+    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
+)
+    Muscle.BackendReactant()
+end
+
+Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
+    ::typeof(Muscle.binary_einsum!),
+    @nospecialize(_::Type{<:TracedRArray}),
+    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
+    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}})
+)
+    Muscle.BackendReactant()
+end
+
 Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
-    @nospecialize(a::Tensor{TracedRNumber{Ta}}), @nospecialize(b::Tensor{TracedRNumber{Tb}}); kwargs...
+    ::BackendReactant, inds_c, @nospecialize(a::Tensor{TracedRNumber{Ta}}), @nospecialize(b::Tensor{TracedRNumber{Tb}})
 ) where {Ta,Tb}
-    dims = get(kwargs, :dims) do
-        ∩(inds(a), inds(b))
-    end
-    out = get(kwargs, :out, nothing)
+    out = inds_c
+    dims = setdiff(inds(a) ∩ inds(b), out)
 
     ia, ib = collect(inds(a)), collect(inds(b))
     @assert allunique(ia) "can't perform unary einsum operations on binary einsum"
@@ -98,9 +115,6 @@ Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
     @assert dims ⊆ ia ∩ ib "`dims` must be a subset of the intersection of the indices of the two tensors"
     @assert isnothing(out) || out ⊆ ia ∪ ib "`out` must be a subset of the union of the indices of the two tensors"
     @assert isnothing(out) || allunique(out) "indices in `out` for a binary einsum must be unique (no repetitions)"
-
-    # override `dims` if `out` is provided
-    dims = !isnothing(out) ? setdiff(dims, out) : dims
 
     contracting_inds = ∩(dims, ia, ib)
     contracting_dimensions = if isempty(contracting_inds)
@@ -127,7 +141,7 @@ Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
     data = Reactant.Ops.dot_general(da, db; contracting_dimensions, batching_dimensions)
 
     # if `out` is provided, emit `stablehlo.transpose` to correct dimension order
-    if !isnothing(out)
+    if !isempty(out)
         data = Reactant.Ops.transpose(data, map(i -> findfirst(==(i), ic), out))
         ic = out
     end
@@ -135,12 +149,18 @@ Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
     return Tensor(data, ic)
 end
 
-function Muscle.binary_einsum(@nospecialize(a::Tensor), @nospecialize(b::Tensor{TracedRNumber{T}}); kwargs...) where {T}
-    Muscle.binary_einsum(b, a; kwargs...)
+function Muscle.binary_einsum(
+    ::BackendReactant, inds_c, @nospecialize(a::Tensor), @nospecialize(b::Tensor{TracedRNumber{T}}); kwargs...
+) where {T}
+    Muscle.binary_einsum(BackendReactant(), inds_c, b, a; kwargs...)
 end
 
-function Muscle.binary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}), @nospecialize(b::Tensor); kwargs...) where {T}
-    return Muscle.binary_einsum(a, Tensor(Reactant.Ops.constant(parent(b)), inds(b)); kwargs...)
+function Muscle.binary_einsum(
+    ::BackendReactant, inds_c, @nospecialize(a::Tensor{TracedRNumber{T}}), @nospecialize(b::Tensor); kwargs...
+) where {T}
+    return Muscle.binary_einsum(
+        BackendReactant(), inds_c, a, Tensor(Reactant.Ops.constant(parent(b)), inds(b)); kwargs...
+    )
 end
 
 # TODO binary_einsum!
