@@ -1,6 +1,3 @@
-using Adapt
-using OMEinsum: OMEinsum
-
 """
     binary_einsum(a::Tensor, b::Tensor; dims=∩(inds(a), inds(b)), out=nothing)
 
@@ -20,9 +17,9 @@ Perform a binary tensor contraction operation between `a` and `b` and store the 
 """
 function binary_einsum! end
 
-# TODO add a preference system for some backends
-choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendOMEinsum()
+choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
+choose_backend_rule(::typeof(binary_einsum!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
+
 function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=nothing)
     inds_sum = ∩(dims, inds(a), inds(b))
 
@@ -32,9 +29,7 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
         out
     end
 
-    data_a = parent(a)
-    data_b = parent(b)
-    backend = choose_backend(binary_einsum, data_a, data_b)
+    backend = choose_backend(binary_einsum, parent(a), parent(b))
     # if ismissing(backend)
     #     @warn "No backend found for binary_einsum(::$(typeof(a)), ::$(typeof(b))), so unwrapping data"
     #     data_a = collect(data_a)
@@ -42,8 +37,7 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
     #     backend = choose_backend(binary_einsum, data_a, data_b)
     # end
 
-    data_c = binary_einsum(backend, inds_c, data_a, inds(a), data_b, inds(b))
-    return Tensor(data_c, inds_c)
+    return binary_einsum(backend, inds_c, a, b)
 end
 
 function binary_einsum!(c::Tensor, a::Tensor, b::Tensor)
@@ -57,29 +51,53 @@ function binary_einsum!(c::Tensor, a::Tensor, b::Tensor)
         backend = choose_backend(binary_einsum, data_a, data_b)
     end
 
-    binary_einsum!(backend, data_c, inds(c), data_a, inds(a), data_b, inds(b))
+    binary_einsum!(backend, c, a, b)
     return c
 end
 
-# backend implementations
-## `OMEinsum`
-function binary_einsum(::BackendOMEinsum, inds_c, a, inds_a, b, inds_b)
-    size_dict = Dict{Index,Int}()
-    for (ind, ind_size) in Iterators.flatten([inds_a .=> size(a), inds_b .=> size(b)])
-        size_dict[ind] = ind_size
-    end
+function binary_einsum(::BackendBase, inds_c, a::Tensor, b::Tensor)
+    inds_contract = inds(a) ∩ inds(b)
+    inds_left = setdiff(inds(a), inds_contract)
+    inds_right = setdiff(inds(b), inds_contract)
 
-    c = OMEinsum.get_output_array((a, b), Int[size_dict[i] for i in inds_c], false)
-    OMEinsum.einsum!((inds_a, inds_b), inds_c, (a, b), c, true, false, size_dict)
-    return c
+    # can't deal with hyperindices
+    @argcheck isdisjoint(inds_c, inds_contract) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
+    @argcheck issetequal(inds_c, symdiff(inds(a), inds(b))) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
+
+    sizes_left = map(Base.Fix1(size, a), inds_left)
+    sizes_right = map(Base.Fix1(size, b), inds_right)
+    sizes_contract = map(Base.Fix1(size, a), inds_contract)
+
+    a_mat = reshape(parent(permutedims(a, [inds_left; inds_contract])), prod(sizes_left), prod(sizes_contract))
+    b_mat = reshape(parent(permutedims(b, [inds_contract; inds_right])), prod(sizes_contract), prod(sizes_right))
+
+    c_mat = a_mat * b_mat
+
+    c = Tensor(reshape(c_mat, sizes_left..., sizes_right...), [inds_left; inds_right])
+    return permutedims(c, inds_c)
 end
 
-function binary_einsum!(::BackendOMEinsum, c, inds_c, a, inds_a, b, inds_b)
-    size_dict = Dict{Index,Int}()
-    for (ind, ind_size) in Iterators.flatten([inds_a .=> size(a), inds_b .=> size(b)])
-        size_dict[ind] = ind_size
-    end
+function binary_einsum!(::BackendBase, c::Tensor, a::Tensor, b::Tensor)
+    inds_contract = inds(a) ∩ inds(b)
+    inds_left = setdiff(inds(a), inds_contract)
+    inds_right = setdiff(inds(b), inds_contract)
 
-    OMEinsum.einsum!((inds_a, inds_b), inds_c, (a, b), c, true, false, size_dict)
-    return c
+    # can't deal with hyperindices
+    @argcheck isdisjoint(inds(c), inds_contract) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
+    @argcheck issetequal(inds(c), symdiff(inds(a), inds(b))) "`BackendBase` can't deal with hyperindices. Load OMEinsum and use `BackendOMEinsum` instead."
+
+    # can't deal with inplace permutedims
+    @argcheck inds(c) == [inds_left; inds_right]
+
+    sizes_left = map(Base.Fix1(size, a), inds_left)
+    sizes_right = map(Base.Fix1(size, b), inds_right)
+    sizes_contract = prod(Base.Fix1(size, a), inds_contract)
+
+    a_mat = reshape(parent(permutedims(a, [inds_left; inds_contract])), prod(sizes_left), prod(sizes_contract))
+    b_mat = reshape(parent(permutedims(b, [inds_contract; inds_right])), prod(sizes_contract), prod(sizes_right))
+    c_mat = reshape(c, prod(sizes_left), prod(sizes_right))
+
+    LinearAlgebra.mul!(c_mat, a_mat, b_mat)
+
+    return reshape(c_mat, sizes_left..., sizes_right...)
 end

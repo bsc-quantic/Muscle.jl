@@ -30,4 +30,4 @@ U, s, V = Muscle.tensor_svd_thin(A; inds_u=[Index(:i), Index(:j)], ind_s=Index(:
 @test size(s) == (8,)
 @test size(V) == (6, 8, 8)
 
-@test isapprox(Muscle.binary_einsum(Muscle.binary_einsum(U, s; dims=Index[]), V), A)
+@test isapprox(Muscle.binary_einsum(Muscle.hadamard(U, s), V), A)
