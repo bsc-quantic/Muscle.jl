@@ -17,8 +17,13 @@ Perform a binary tensor contraction operation between `a` and `b` and store the 
 """
 function binary_einsum! end
 
-choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
+function choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array})
+    DEFAULT_BACKEND[binary_einsum]
+end
+
+function choose_backend_rule(::typeof(binary_einsum!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array})
+    DEFAULT_BACKEND[binary_einsum!]
+end
 
 function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=nothing)
     inds_sum = ∩(dims, inds(a), inds(b))

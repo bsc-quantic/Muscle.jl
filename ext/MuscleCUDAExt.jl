@@ -5,6 +5,11 @@ using cuTENSOR
 using Muscle
 import Muscle: binary_einsum, binary_einsum!, BackendCuTENSOR, choose_backend_rule, memory_space
 
+function __init__()
+    Muscle.register_backend(BackendCUDA())
+    Muscle.register_backend(BackendCuTENSOR())
+end
+
 memory_space(::Type{<:CuArray}) = CUDAMemorySpace()
 
 Muscle.choose_backend_rule(::typeof(binary_einsum), ::Type{<:CuArray}, ::Type{<:CuArray}) = BackendCuTENSOR()

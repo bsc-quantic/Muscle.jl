@@ -1,6 +1,7 @@
 using ArgCheck
 using Adapt
 using LinearAlgebra: LinearAlgebra
+using ScopedValues
 
 abstract type Vendor end
 struct Intel <: Vendor end
@@ -60,11 +61,20 @@ struct BackendCuTensorNet <: Backend end
 struct BackendReactant <: Backend end
 
 # set of loaded backends available for use
-const loaded_backends = Set{Backend}([
-    BackendBase(), BackendOMEinsum(), BackendCUDA(), BackendCuTENSOR(), BackendCuTensorNet()
-])
+const LOADED_BACKENDS = Set{Backend}([BackendBase()])
+const loaded_backends_lock = ReentrantLock()
+register_backend(backend::Backend) = @lock loaded_backends_lock push!(LOADED_BACKENDS, backend)
+
+# set of backends that are allowed to be used for each operation
+const ALLOWED_BACKENDS = Dict{Function,Set{Backend}}()
+const allowed_backends_lock = ReentrantLock()
+
+# default backend for each operation
+const DEFAULT_BACKEND = Dict{Function,ScopedValue{Backend}}()
+const default_backends_lock = ReentrantLock()
 
 function choose_backend end
+function choose_backend_rule end
 function allowed_backends end
 
 # choose_backend(f::Function, arrays::AbstractArray...) = choose_backend(f, arrays...)

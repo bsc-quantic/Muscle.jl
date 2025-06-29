@@ -5,6 +5,10 @@ using Muscle: BackendOMEinsum
 using OMEinsum
 using ArgCheck
 
+function __init__()
+    Muscle.register_backend(BackendOMEinsum())
+end
+
 # TODO add a preference system for some backends
 function Muscle.choose_backend_rule(::typeof(unary_einsum), ::Type{<:Array})
     Muscle.BackendOMEinsum()

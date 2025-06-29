@@ -6,6 +6,10 @@ using Strided
 using StridedViews
 using ArgCheck
 
+function __init__()
+    Muscle.register_backend(BackendStrided())
+end
+
 function Muscle.choose_backend_rule(::typeof(binary_einsum), ::Type{<:StridedView}, ::Type{<:Array})
     BackendStrided()
 end
