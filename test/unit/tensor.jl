@@ -275,7 +275,7 @@ end
     @test inds(c) == [Index(:k), Index(:i), Index(:j)]
     @test parent(c) == permutedims(data, perm)
 
-    newtensor = Tensor(similar(data), [Index(:a), Index(:b), Index(:c)])
+    newtensor = Tensor(similar(data, 4, 2, 3), [Index(:a), Index(:b), Index(:c)])
     permutedims!(newtensor, tensor, perm)
     @test parent(newtensor) == parent(c)
 
