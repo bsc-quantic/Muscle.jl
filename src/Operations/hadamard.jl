@@ -6,7 +6,7 @@ choose_backend_rule(::typeof(hadamard!), ::Type{<:Array}, ::Type{<:Array}, ::Typ
 
 function hadamard(a::Tensor, b::Tensor)
     # `b` must be broadcastable to `a`
-    ndims(a) >= ndims(b) || hadamard(b, a)
+    ndims(a) >= ndims(b) || return hadamard(b, a)
     @argcheck inds(b) ⊆ inds(a)
     backend = choose_backend(hadamard, parent(a), parent(b))
     return hadamard(backend, a, b)
@@ -14,7 +14,7 @@ end
 
 function hadamard!(c::Tensor, a::Tensor, b::Tensor)
     # `b` must be broadcastable to `a`
-    ndims(a) >= ndims(b) || hadamard(c, b, a)
+    ndims(a) >= ndims(b) || return hadamard(c, b, a)
 
     @argcheck inds(c) == inds(a)
     @argcheck inds(b) ⊆ inds(a)
@@ -25,7 +25,7 @@ end
 
 function hadamard(::BackendBase, a::Tensor, b::Tensor)
     # `b` must be broadcastable to `a`
-    ndims(a) >= ndims(b) || hadamard(BackendBase(), b, a)
+    ndims(a) >= ndims(b) || return hadamard(BackendBase(), b, a)
 
     c = copy(a)
     return hadamard!(BackendBase(), c, a, b)
@@ -33,7 +33,7 @@ end
 
 function hadamard!(::BackendBase, c::Tensor, a::Tensor, b::Tensor)
     # `b` must be broadcastable to `a`
-    ndims(a) >= ndims(b) || hadamard!(BackendBase(), c, b, a)
+    ndims(a) >= ndims(b) || return hadamard!(BackendBase(), c, b, a)
 
     @argcheck inds(c) == inds(a)
 
