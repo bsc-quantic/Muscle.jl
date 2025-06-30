@@ -132,7 +132,7 @@ Replace the indices of the tensor according to the given pairs of old and new in
 
     This method does not support cyclic replacements.
 """
-Base.replace(t::Tensor, old_new::P...) where {P<:Base.Pair} = Tensor(parent(t), replace(inds(t), old_new...))
+Base.replace(t::Tensor, old_new::Pair...) = Tensor(parent(t), replace(inds(t), old_new...))
 
 """
     Base.parent(::Tensor)
