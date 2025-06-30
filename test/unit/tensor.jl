@@ -267,16 +267,23 @@ end
 end
 
 @testset "permutedims" begin
-    data = rand(2, 2, 2)
+    data = reshape(collect(1:24), 2, 3, 4)
     tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
+
     perm = (3, 1, 2)
+    c = permutedims(tensor, perm)
+    @test inds(c) == [Index(:k), Index(:i), Index(:j)]
+    @test parent(c) == permutedims(data, perm)
 
-    @test inds(permutedims(tensor, perm)) == [Index(:k), Index(:i), Index(:j)]
-    @test parent(permutedims(tensor, perm)) == permutedims(data, perm)
-
-    newtensor = Tensor(similar(data), [Index(:a), Index(:b), Index(:c)])
+    newtensor = Tensor(similar(data, 4, 2, 3), [Index(:a), Index(:b), Index(:c)])
     permutedims!(newtensor, tensor, perm)
-    @test parent(newtensor) == parent(permutedims(tensor, perm))
+    @test parent(newtensor) == parent(c)
+
+    # list of indices as permutator
+    perm2 = [Index(:k), Index(:i), Index(:j)]
+    c2 = permutedims(tensor, perm2)
+    @test inds(c2) == [Index(:k), Index(:i), Index(:j)]
+    @test parent(c2) == permutedims(data, perm)
 end
 
 @testset "conj/adjoint" begin

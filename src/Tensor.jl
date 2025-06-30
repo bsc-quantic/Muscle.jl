@@ -48,6 +48,17 @@ function Tensor{T,N,A}(data::A, inds::Vector{Symbol}) where {T,N,A<:AbstractArra
     Tensor(data, ImmutableVector(map(Index, inds)))
 end
 
+Tensor(x::Tensor) = x
+Tensor{T,N,A}(x::Tensor{T,N,A}) where {T,N,A} = x
+function Tensor{T,N,A}(x::Tensor) where {T,N,A}
+    throw(ArgumentError("Tensor type mismatch: $(typeof(x)) is not a Tensor{T,N,A}"))
+end
+
+Tensor(::Tensor, _) = throw(ArgumentError("Can't wrap a `Tensor` with another `Tensor`"))
+function Tensor{T,N,A}(::Tensor, _) where {T,N,A}
+    throw(ArgumentError("Can't wrap a `Tensor` with another `Tensor`"))
+end
+
 """
     inds(::Tensor)
 
@@ -57,6 +68,9 @@ inds(x::Tensor) = x.inds
 
 Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
 Adapt.adapt_structure(to, x::Tensor) = Tensor(adapt(to, parent(x)), inds(x))
+
+arraytype(::Type{Tensor{T,N,A}}) where {T,N,A} = A
+arraytype(::T) where {T<:Tensor} = arraytype(T)
 
 """
     Base.similar(::Tensor{T,N}[, S::Type, dims::Base.Dims{N}; inds])
@@ -118,7 +132,7 @@ Replace the indices of the tensor according to the given pairs of old and new in
 
     This method does not support cyclic replacements.
 """
-Base.replace(t::Tensor, old_new::P...) where {P<:Base.Pair} = Tensor(parent(t), replace(inds(t), old_new...))
+Base.replace(t::Tensor, old_new::Pair...) = Tensor(parent(t), replace(inds(t), old_new...))
 
 """
     Base.parent(::Tensor)
@@ -249,7 +263,18 @@ Base.selectdim(t::Tensor, d, i) = selectdim(t, dim(t, d), i)
 
 Permute the dimensions of `tensor` according to the given permutation `perm`. The [`inds`](@ref) will be permuted accordingly.
 """
-Base.permutedims(t::Tensor, perm) = Tensor(permutedims(parent(t), perm), getindex.((inds(t),), perm))
+function Base.permutedims(t::Tensor, perm)
+    _inds = Index[]
+    for i in perm
+        push!(_inds, inds(t)[i])
+    end
+    Tensor(permutedims(parent(t), perm), _inds)
+end
+
+# shortcut for 0-dimensional tensors
+Base.permutedims(t::Tensor{T,0}, _) where {T} = t
+Base.permutedims(t::Tensor{T,0}, ::Base.AbstractVecOrTuple{Index}) where {T} = t
+
 Base.permutedims!(dest::Tensor, src::Tensor, perm) = permutedims!(parent(dest), parent(src), perm)
 
 function Base.permutedims(t::Tensor{T}, perm::Base.AbstractVecOrTuple{Index}) where {T}

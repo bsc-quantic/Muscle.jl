@@ -52,6 +52,7 @@ abstract type Backend end
 
 struct BackendBase <: Backend end
 struct BackendCustom <: Backend end
+struct BackendStrided <: Backend end
 struct BackendOMEinsum <: Backend end
 struct BackendCUDA <: Backend end
 struct BackendCuTENSOR <: Backend end

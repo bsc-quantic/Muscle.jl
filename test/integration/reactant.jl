@@ -3,6 +3,7 @@ using Muscle
 using Reactant
 using Adapt
 using Enzyme
+using OMEinsum
 
 # TODO test `make_tracer`
 # TODO test `create_result`
@@ -82,16 +83,16 @@ end
         Bre = adapt(ConcreteRArray, B)
 
         # binary_einsumion of all common indices
-        f1(a, b) = binary_einsum(a, b; dims=[Index(:j), Index(:k)])
-        C = f1(A, B)
-        Cre = @jit f1(Are, Bre)
+        C = binary_einsum(A, B; dims=[Index(:j), Index(:k)])
+        Cre = @jit binary_einsum(Are, Bre; dims=[Index(:j), Index(:k)])
 
         @test Cre ≈ C
 
         # binary_einsumion of not all common indices
-        f2(a, b) = binary_einsum(a, b; dims=[Index(:j)])
-        C = f2(A, B)
-        Cre = @jit f2(Are, Bre)
+        # NOTE using `OMEinsum` because we are treating `:k` as a hyperindex
+        # TODO better use backend override when available
+        C = binary_einsum(Muscle.BackendOMEinsum(), [Index(:i), Index(:k), Index(:l)], A, B)
+        Cre = @jit binary_einsum(Are, Bre; dims=[Index(:j)])
 
         @test Cre ≈ C
     end
@@ -109,7 +110,15 @@ end
 
         f3(a, b, c, d) = binary_einsum(binary_einsum(a, b), binary_einsum(c, d; dims=[Index(:m)]))
 
-        X = f3(A, B, C, D)
+        # NOTE using `OMEinsum` because we are treating `:i` as a hyperindex
+        # TODO better use backend override when available
+        function f3_omeinsum(a, b, c, d)
+            binary_einsum(
+                binary_einsum(a, b), binary_einsum(Muscle.BackendOMEinsum(), [Index(:l), Index(:i), Index(:n)], c, d)
+            )
+        end
+
+        X = f3_omeinsum(A, B, C, D)
         Xre = @jit f3(Are, Bre, Cre, Dre)
 
         @test Xre ≈ X

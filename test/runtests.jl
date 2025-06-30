@@ -5,6 +5,7 @@ using SafeTestsets
 @testset "Unit" verbose = true begin
     @testset "Tensor" include("unit/tensor.jl")
     @testset "Operations" verbose = true begin
+        @testset "hadamard" include("unit/operations/hadamard.jl")
         @testset "unary_einsum" include("unit/operations/unary_einsum.jl")
         @testset "binary_einsum" include("unit/operations/binary_einsum.jl")
         @testset "tensor_qr_thin" include("unit/operations/tensor_qr_thin.jl")
@@ -15,10 +16,8 @@ end
 
 @testset "Integration" verbose = true begin
     @safetestset "QuantumTags" include("integration/quantumtags.jl")
-
-    @safetestset "Reactant" begin
-        include("integration/reactant.jl")
-    end
+    @safetestset "OMEinsum" include("integration/omeinsum.jl")
+    @safetestset "Strided" include("integration/strided.jl")
 
     #     include("integration/ChainRules_test.jl")
     #     include("integration/Dagger_test.jl")
@@ -27,6 +26,10 @@ end
 
     if !isnothing(get(ENV, "MUSCLE_TEST_CUDA", nothing))
         @safetestset "CUDA" include("integration/cuda.jl")
+    end
+
+    if !isnothing(get(ENV, "MUSCLE_TEST_REACTANT", nothing))
+        @safetestset "Reactant" include("integration/reactant.jl")
     end
 end
 

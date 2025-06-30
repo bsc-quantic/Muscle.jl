@@ -12,6 +12,9 @@ export Tensor
 
 include("Architecture.jl")
 
+include("Operations/hadamard.jl")
+export hadamard, hadamard!
+
 include("Operations/unary_einsum.jl")
 export unary_einsum, unary_einsum!
 
