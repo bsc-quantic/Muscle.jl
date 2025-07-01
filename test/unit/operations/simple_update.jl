@@ -148,6 +148,7 @@ end
     @test s ≈ Tensor([√2], [Index((; bond=(1, 2)))])
 end
 
+# TODO test better
 @testset "apply identity, absorb s to u" begin
     U, V = Muscle.simple_update(
         Γa,
@@ -164,7 +165,7 @@ end
     @test LinearAlgebra.norm(U) ≈ norm(binary_einsum(Γa, Γb))
 end
 
-# TODO test value of `V` numerically
+# TODO test better
 @testset "apply identity, absorb s to v" begin
     U, V = Muscle.simple_update(
         Γa,
@@ -181,7 +182,7 @@ end
     @test LinearAlgebra.norm(V) ≈ norm(binary_einsum(Γa, Γb))
 end
 
-# TODO test value of `U` and `V` numerically
+# TODO test better
 @testset "apply identity, absorb s equally" begin
     U, V = Muscle.simple_update(
         Γa,
@@ -195,6 +196,6 @@ end
         absorb=Muscle.AbsorbEqually(),
     )
 
-    @test LinearAlgebra.norm(U) ≈ sqrt(norm(binary_einsum(Γa, Γb)))
-    @test LinearAlgebra.norm(V) ≈ sqrt(norm(binary_einsum(Γa, Γb)))
+    @test U ≈ Γa
+    @test V ≈ Γb
 end
