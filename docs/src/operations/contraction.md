@@ -43,6 +43,6 @@ Muscle.binary_einsum(a, b; out=[Index(:j)])
 But what if instead of contracting index `:i`, we want to perform a Hadamard product (element-wise multiplication)? Then that's a case where implicit inference of the einsum rule is not enough and you need to specify `dims` or `out`.
 
 ```@repl tensor
-Muscle.binary_einsum(a, b; dims=Index[])
+# Muscle.binary_einsum(a, b; dims=Index[])
 Muscle.binary_einsum(a, b; out=[Index(:i), Index(:j)])
 ```

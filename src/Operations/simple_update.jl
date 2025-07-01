@@ -67,13 +67,13 @@ function simple_update(
     if absorb isa DontAbsorb
         return U, S, V
     elseif absorb isa AbsorbU
-        U = Muscle.binary_einsum(U, S; dims=Index[])
+        U = Muscle.hadamard(U, S)
     elseif absorb isa AbsorbV
-        V = Muscle.binary_einsum(V, S; dims=Index[])
+        V = Muscle.hadamard(V, S)
     elseif absorb isa AbsorbEqually
         S_sqrt = sqrt.(S)
-        U = Muscle.binary_einsum(U, S_sqrt; dims=Index[])
-        V = Muscle.binary_einsum(V, S_sqrt; dims=Index[])
+        U = Muscle.hadamard(U, S_sqrt)
+        V = Muscle.hadamard(V, S_sqrt)
     end
 
     return U, V
