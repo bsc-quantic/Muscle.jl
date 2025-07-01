@@ -147,3 +147,57 @@ end
     @test size(V, Index((; bond=(1, 2)))) == 1
     @test s ≈ Tensor([√2], [Index((; bond=(1, 2)))])
 end
+
+# TODO test value of `U` numerically
+@testset "apply cx, absorb s to u" begin
+    U, V = Muscle.simple_update(
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
+        Index((; bond=(1, 2))),
+        op_cx,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2));
+        absorb=Muscle.AbsorbU(),
+    )
+
+    @test V ≈ Tensor(1 / √2 * [1; 1;;], [Index((; site=2, cut=1)), Index((; bond=(1, 2)))])
+    @test size(V, Index((; bond=(1, 2)))) == 1
+end
+
+# TODO test value of `V` numerically
+@testset "apply cx, absorb s to v" begin
+    U, V = Muscle.simple_update(
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
+        Index((; bond=(1, 2))),
+        op_cx,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2));
+        absorb=Muscle.AbsorbV(),
+    )
+
+    @test V ≈ Tensor(1 / √2 * [1; 1;;], [Index((; site=2, cut=1)), Index((; bond=(1, 2)))])
+    @test size(V, Index((; bond=(1, 2)))) == 1
+end
+
+# TODO test value of `U` and `V` numerically
+@testset "apply cx, absorb s equally" begin
+    U, V = Muscle.simple_update(
+        Γa,
+        Index((; site=1, cut=1)),
+        Γb,
+        Index((; site=2, cut=1)),
+        Index((; bond=(1, 2))),
+        op_cx,
+        Index((; site=1, cut=2)),
+        Index((; site=2, cut=2));
+        absorb=Muscle.AbsorbEqually(),
+    )
+
+    @test U ≈ Γa
+    @test size(V, Index((; bond=(1, 2)))) == 1
+end
