@@ -67,13 +67,13 @@ function simple_update(
     if absorb isa DontAbsorb
         return U, S, V
     elseif absorb isa AbsorbU
-        U = Muscle.hadamard(U, S)
+        U = Muscle.hadamard!(U, U, S)
     elseif absorb isa AbsorbV
-        V = Muscle.hadamard(V, S)
+        V = Muscle.hadamard!(V, V, S)
     elseif absorb isa AbsorbEqually
         S_sqrt = sqrt.(S)
-        U = Muscle.hadamard(U, S_sqrt)
-        V = Muscle.hadamard(V, S_sqrt)
+        U = Muscle.hadamard!(U, U, S_sqrt)
+        V = Muscle.hadamard!(V, V, S_sqrt)
     end
 
     return U, V
