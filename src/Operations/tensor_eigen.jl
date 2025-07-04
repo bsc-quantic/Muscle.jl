@@ -22,17 +22,11 @@ function tensor_eigen_thin! end
 function tensor_bieigen_thin end
 function tensor_bieigen_thin! end
 
-choose_backend_rule(::typeof(tensor_eigen_thin), ::Type{<:Array}) = BackendBase()
-function choose_backend_rule(::typeof(tensor_eigen_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array})
-    BackendBase()
-end
+choose_backend_rule(::typeof(tensor_eigen_thin), ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(tensor_eigen_thin!), ::Vararg{DomainHost,3}) = BackendBase()
 
-choose_backend_rule(::typeof(tensor_bieigen_thin), ::Type{<:Array}) = BackendBase()
-function choose_backend_rule(
-    ::typeof(tensor_bieigen_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}
-)
-    BackendBase()
-end
+choose_backend_rule(::typeof(tensor_bieigen_thin), ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(tensor_bieigen_thin!), ::Vararg{DomainHost,4}) = BackendBase()
 
 function tensor_eigen_thin(
     A::Tensor; inds_u=(), inds_uinv=(), ind_lambda=Index(gensym(:eigen)), inplace=false, kwargs...

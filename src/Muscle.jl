@@ -10,7 +10,8 @@ export Index
 include("Tensor.jl")
 export Tensor
 
-include("Architecture.jl")
+include("Domain.jl")
+include("Backend.jl")
 
 include("Operations/hadamard.jl")
 export hadamard, hadamard!

@@ -18,9 +18,9 @@ end
     @safetestset "QuantumTags" include("integration/quantumtags.jl")
     @safetestset "OMEinsum" include("integration/omeinsum.jl")
     @safetestset "Strided" include("integration/strided.jl")
+    @safetestset "Dagger" include("integration/dagger.jl")
 
     #     include("integration/ChainRules_test.jl")
-    #     include("integration/Dagger_test.jl")
 
     @safetestset "ITensors" include("integration/itensors.jl")
 

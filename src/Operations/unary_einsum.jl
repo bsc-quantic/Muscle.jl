@@ -17,6 +17,12 @@ Perform a unary tensor contraction operation on `a` and store the result in `c`.
 """
 function unary_einsum! end
 
+choose_backend_rule(::typeof(unary_einsum), ::DomainHost) = BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum), ::DomainCUDA) = BackendOMEinsum()
+
+choose_backend_rule(::typeof(unary_einsum!), ::DomainHost, ::DomainHost) = BackendOMEinsum()
+choose_backend_rule(::typeof(unary_einsum!), ::DomainCUDA, ::DomainCUDA) = BackendOMEinsum()
+
 function unary_einsum(x::Tensor; dims=nonunique(inds(x)), out=nothing)
     inds_sum = ∩(dims, inds(x))
     inds_y = if isnothing(out)
@@ -25,12 +31,20 @@ function unary_einsum(x::Tensor; dims=nonunique(inds(x)), out=nothing)
         out
     end
 
-    backend = choose_backend(unary_einsum, parent(x))
+    backend = choose_backend(unary_einsum, x)
     return unary_einsum(backend, inds_y, x)
 end
 
+function unary_einsum(::Backend, x; kwargs...)
+    throw(ArgumentError("`unary_einsum` not implemented or not loaded for backend $(typeof(x))"))
+end
+
 function unary_einsum!(y::Tensor, x::Tensor)
-    backend = choose_backend(unary_einsum!, parent(y), parent(x))
+    backend = choose_backend(unary_einsum!, y, x)
     unary_einsum!(backend, y, x)
     return y
+end
+
+function unary_einsum(::Backend, y, x; kwargs...)
+    throw(ArgumentError("`unary_einsum!` not implemented or not loaded for backend $(typeof(x))"))
 end

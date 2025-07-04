@@ -17,8 +17,18 @@ Perform a binary tensor contraction operation between `a` and `b` and store the 
 """
 function binary_einsum! end
 
-choose_backend_rule(::typeof(binary_einsum), ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(binary_einsum!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
+choose_backend_rule(::typeof(binary_einsum), ::DomainHost, ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(binary_einsum), ::DomainCUDA, ::DomainCUDA) = BackendCuTENSOR()
+choose_backend_rule(::typeof(binary_einsum), ::DomainReactant, ::DomainReactant) = BackendReactant()
+choose_backend_rule(::typeof(binary_einsum), ::DomainReactant, ::DomainHost) = BackendReactant()
+choose_backend_rule(::typeof(binary_einsum), ::DomainHost, ::DomainReactant) = BackendReactant()
+choose_backend_rule(::typeof(binary_einsum), ::DomainDagger, ::DomainDagger) = BackendDagger()
+choose_backend_rule(::typeof(binary_einsum), ::DomainHost, ::DomainDagger) = BackendDagger()
+choose_backend_rule(::typeof(binary_einsum), ::DomainDagger, ::DomainHost) = BackendDagger()
+
+choose_backend_rule(::typeof(binary_einsum!), ::DomainHost, ::DomainHost, ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(binary_einsum!), ::DomainCUDA, ::DomainCUDA, ::DomainCUDA) = BackendCuTENSOR()
+choose_backend_rule(::typeof(binary_einsum!), ::DomainReactant, ::DomainReactant, ::DomainReactant) = BackendReactant()
 
 function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=nothing)
     inds_sum = ∩(dims, inds(a), inds(b))
@@ -40,6 +50,10 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
     return binary_einsum(backend, inds_c, a, b)
 end
 
+function binary_einsum(::Backend, inds_c, a, b)
+    throw(ArgumentError("`binary_einsum` not implemented or not loaded for backend $(typeof(a))"))
+end
+
 function binary_einsum!(c::Tensor, a::Tensor, b::Tensor)
     data_c = parent(c)
     data_a = parent(a)
@@ -53,6 +67,10 @@ function binary_einsum!(c::Tensor, a::Tensor, b::Tensor)
 
     binary_einsum!(backend, c, a, b)
     return c
+end
+
+function binary_einsum!(::Backend, c, a, b)
+    throw(ArgumentError("`binary_einsum!` not implemented or not loaded for backend $(typeof(a))"))
 end
 
 function binary_einsum(::BackendBase, inds_c, a::Tensor, b::Tensor)

@@ -7,8 +7,8 @@ using Reactant: TracedRNumber, TracedRArray
 const MLIR = Reactant.MLIR
 const stablehlo = MLIR.Dialects.stablehlo
 
-Muscle.memory_space(::Type{<:TracedRArray}) = Muscle.ReactantMemorySpace()
-Muscle.memory_space(::Type{<:Reactant.AnyConcreteRArray}) = Muscle.ReactantMemorySpace()
+Muscle.Domain(::Type{<:TracedRArray}) = Muscle.DomainReactant()
+Muscle.Domain(::Type{<:Reactant.AnyConcreteRArray}) = Muscle.DomainReactant()
 
 # we specify `mode` and `track_numbers` types due to ambiguity
 Base.@nospecializeinfer function Reactant.traced_type_inner(
@@ -66,41 +66,10 @@ Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
     Muscle.BackendReactant()
 end
 
-function Muscle.unary_einsum(@nospecialize(a::Tensor{TracedRNumber{T}}); dims=nonunique(inds(a)), out=nothing) where {T}
+function Muscle.unary_einsum(
+    ::Muscle.DomainReactant, @nospecialize(a::Tensor{TracedRNumber{T}}); dims=nonunique(inds(a)), out=nothing
+) where {T}
     error("compilation of `Muscle.unary_einsum` is not yet supported")
-end
-
-Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
-    ::typeof(Muscle.binary_einsum),
-    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
-    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
-)
-    Muscle.BackendReactant()
-end
-
-Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
-    ::typeof(Muscle.binary_einsum),
-    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
-    @nospecialize(_::Type{<:AbstractArray}),
-)
-    Muscle.BackendReactant()
-end
-
-Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
-    ::typeof(Muscle.binary_einsum),
-    @nospecialize(_::Type{<:AbstractArray}),
-    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
-)
-    Muscle.BackendReactant()
-end
-
-Base.Base.@nospecializeinfer function Muscle.choose_backend_rule(
-    ::typeof(Muscle.binary_einsum!),
-    @nospecialize(_::Type{<:TracedRArray}),
-    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}}),
-    @nospecialize(_::Type{<:Union{<:TracedRArray,<:TracedRNumber}})
-)
-    Muscle.BackendReactant()
 end
 
 Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
