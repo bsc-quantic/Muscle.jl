@@ -1,7 +1,9 @@
 function simple_update end
 function simple_update! end
 
-choose_backend_rule(::typeof(simple_update), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendCustom()
+choose_backend_rule(::typeof(simple_update), ::DomainHost, ::DomainHost, ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(simple_update), ::DomainCUDA, ::DomainCUDA, ::DomainCUDA) = BackendCuTensorNet()
+
 # absorb behavior trait
 # used to keep type-inference happy (`DontAbsorb` returns 3 tensors, while the rest return 2)
 abstract type AbsorbBehavior end
@@ -31,7 +33,7 @@ end
 
 # TODO change and document the way we indicate the physical indices to contract
 function simple_update(
-    ::BackendCustom,
+    ::Backend,
     A::Tensor,
     ind_physical_a::Index,
     B::Tensor,

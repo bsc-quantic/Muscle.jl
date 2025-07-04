@@ -19,12 +19,12 @@ Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be speci
 function tensor_svd_thin end
 function tensor_svd_thin! end
 
-choose_backend_rule(::typeof(tensor_svd_thin), ::Type{<:Array}) = BackendBase()
-function choose_backend_rule(
-    ::typeof(tensor_svd_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}
-)
-    BackendBase()
-end
+choose_backend_rule(::typeof(tensor_svd_thin), ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(tensor_svd_thin), ::DomainCUDA) = BackendCuTensorNet()
+
+choose_backend_rule(::typeof(tensor_svd_thin!), ::Vararg{DomainHost,4}) = BackendBase()
+choose_backend_rule(::typeof(tensor_svd_thin!), ::Vararg{DomainCUDA,4}) = BackendCuTensorNet()
+
 # function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), kwargs...)
 #     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
 #     left_extent = prod(Base.Fix1(size, A), inds_u)
@@ -48,9 +48,17 @@ function tensor_svd_thin(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:sv
     return tensor_svd_thin(backend, A; inds_u, inds_v, ind_s, inplace, kwargs...)
 end
 
+function tensor_svd_thin(::Backend, A; kwargs...)
+    throw(ArgumentError("`tensor_svd_thin` not implemented or not loaded for backend $(typeof(A))"))
+end
+
 function tensor_svd_thin!(Q::Tensor, R::Tensor, A::Tensor; kwargs...)
     backend = choose_backend(tensor_svd_thin!, Q, R, A)
     return tensor_svd_thin!(backend, Q, R, A; kwargs...)
+end
+
+function tensor_svd_thin!(::Backend, args...; kwargs...)
+    throw(ArgumentError("`tensor_svd_thin!` not implemented or not loaded for backend $(typeof(A))"))
 end
 
 ## `Base`

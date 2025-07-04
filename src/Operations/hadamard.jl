@@ -1,8 +1,8 @@
 function hadamard end
 function hadamard! end
 
-choose_backend_rule(::typeof(hadamard), ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(hadamard!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
+choose_backend_rule(::typeof(hadamard), ::Domain, ::Domain) = BackendBase()
+choose_backend_rule(::typeof(hadamard!), ::Domain, ::Domain, ::Domain) = BackendBase()
 
 function hadamard(a::Tensor, b::Tensor)
     # `b` must be broadcastable to `a`
@@ -10,6 +10,10 @@ function hadamard(a::Tensor, b::Tensor)
     @argcheck inds(b) ⊆ inds(a)
     backend = choose_backend(hadamard, parent(a), parent(b))
     return hadamard(backend, a, b)
+end
+
+function hadamard(::Backend, a, b)
+    throw(ArgumentError("`hadamard` not implemented or not loaded for backend $(typeof(a))"))
 end
 
 function hadamard!(c::Tensor, a::Tensor, b::Tensor)
@@ -21,6 +25,10 @@ function hadamard!(c::Tensor, a::Tensor, b::Tensor)
 
     backend = choose_backend(hadamard!, parent(c), parent(a), parent(b))
     return hadamard!(backend, c, a, b)
+end
+
+function hadamard!(::Backend, c, a, b)
+    throw(ArgumentError("`hadamard!` not implemented or not loaded for backend $(typeof(a))"))
 end
 
 function hadamard(::BackendBase, a::Tensor, b::Tensor)

@@ -18,11 +18,19 @@ function tensor_qr_thin end
 function tensor_qr_thin! end
 
 # TODO add a preference system for some backends
-choose_backend_rule(::typeof(tensor_qr_thin), ::Type{<:Array}) = BackendBase()
-choose_backend_rule(::typeof(tensor_qr_thin!), ::Type{<:Array}, ::Type{<:Array}, ::Type{<:Array}) = BackendBase()
+choose_backend_rule(::typeof(tensor_qr_thin), ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(tensor_qr_thin), ::DomainCUDA) = BackendCuTensorNet()
+
+choose_backend_rule(::typeof(tensor_qr_thin!), ::DomainHost, ::DomainHost, ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(tensor_qr_thin!), ::DomainCUDA, ::DomainCUDA, ::DomainCUDA) = BackendCuTensorNet()
+
 function tensor_qr_thin(A::Tensor; inds_q=(), inds_r=(), ind_virtual=Index(gensym(:qr)), inplace=false, kwargs...)
     backend = choose_backend(tensor_qr_thin, A)
     return tensor_qr_thin(backend, A; inds_q, inds_r, ind_virtual, inplace, kwargs...)
+end
+
+function tensor_qr_thin(::Backend, A; kwargs...)
+    throw(ArgumentError("`tensor_qr_thin` not implemented or not loaded for backend $(typeof(A))"))
 end
 
 function tensor_qr_thin!(Q::Tensor, R::Tensor, A::Tensor; kwargs...)
@@ -30,7 +38,10 @@ function tensor_qr_thin!(Q::Tensor, R::Tensor, A::Tensor; kwargs...)
     return tensor_qr_thin!(backend, Q, R, A; kwargs...)
 end
 
-## `Base`
+function tensor_qr_thin!(::Backend, Q, R, A; kwargs...)
+    throw(ArgumentError("`tensor_qr_thin!` not implemented or not loaded for backend $(typeof(A))"))
+end
+
 function tensor_qr_thin(
     ::BackendBase, A; inds_q=(), inds_r=(), ind_virtual=Index(gensym(:qr)), inplace=false, kwargs...
 )
