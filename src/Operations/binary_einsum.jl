@@ -22,6 +22,9 @@ choose_backend_rule(::typeof(binary_einsum), ::DomainCUDA, ::DomainCUDA) = Backe
 choose_backend_rule(::typeof(binary_einsum), ::DomainReactant, ::DomainReactant) = BackendReactant()
 choose_backend_rule(::typeof(binary_einsum), ::DomainReactant, ::DomainHost) = BackendReactant()
 choose_backend_rule(::typeof(binary_einsum), ::DomainHost, ::DomainReactant) = BackendReactant()
+choose_backend_rule(::typeof(binary_einsum), ::DomainDagger, ::DomainDagger) = BackendDagger()
+choose_backend_rule(::typeof(binary_einsum), ::DomainHost, ::DomainDagger) = BackendDagger()
+choose_backend_rule(::typeof(binary_einsum), ::DomainDagger, ::DomainHost) = BackendDagger()
 
 choose_backend_rule(::typeof(binary_einsum!), ::DomainHost, ::DomainHost, ::DomainHost) = BackendBase()
 choose_backend_rule(::typeof(binary_einsum!), ::DomainCUDA, ::DomainCUDA, ::DomainCUDA) = BackendCuTENSOR()
