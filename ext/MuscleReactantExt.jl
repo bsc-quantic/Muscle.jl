@@ -6,11 +6,13 @@ using Reactant
 using Reactant: TracedRNumber, TracedRArray
 const MLIR = Reactant.MLIR
 const stablehlo = MLIR.Dialects.stablehlo
+using PrecompileTools
 
 Muscle.Domain(::Type{<:TracedRArray}) = Muscle.DomainReactant()
 Muscle.Domain(::Type{<:Reactant.AnyConcreteRArray}) = Muscle.DomainReactant()
 
 # we specify `mode` and `track_numbers` types due to ambiguity
+# TODO in Reactant v0.3, rename it to `Reactant.transmute_type`
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor}),
     seen,
@@ -22,6 +24,7 @@ Base.@nospecializeinfer function Reactant.traced_type_inner(
     return Tensor
 end
 
+# TODO in Reactant v0.3, rename it to `Reactant.transmute_type`
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor{T}}),
     seen,
@@ -33,6 +36,7 @@ Base.@nospecializeinfer function Reactant.traced_type_inner(
     return Tensor{TracedRNumber{T}}
 end
 
+# TODO in Reactant v0.3, rename it to `Reactant.transmute_type`
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor{T,N}}),
     seen,
@@ -44,6 +48,7 @@ Base.@nospecializeinfer function Reactant.traced_type_inner(
     return Tensor{TracedRNumber{T,N}}
 end
 
+# TODO in Reactant v0.3, rename it to `Reactant.transmute_type`
 Base.@nospecializeinfer function Reactant.traced_type_inner(
     @nospecialize(_::Type{Tensor{T,N,A}}),
     seen,
@@ -52,6 +57,7 @@ Base.@nospecializeinfer function Reactant.traced_type_inner(
     sharding,
     runtime,
 ) where {T,N,A}
+    # TODO in Reactant v0.3, rename it to `Reactant.transmute_type`
     A_traced = Reactant.traced_type_inner(A, seen, mode, track_numbers, sharding, runtime)
     T_traced = eltype(A_traced)
     return Tensor{T_traced,N,A_traced}
@@ -138,11 +144,58 @@ end
 Base.conj(@nospecialize(x::Tensor{<:TracedRNumber})) = x
 Base.conj(@nospecialize(x::Tensor{TracedRNumber{T}})) where {T<:Complex} = Tensor(conj(parent(x)), inds(x))
 
-function __init__()
+# This function is used to skip rewriting of certain functions and type constructors in Reactant.jl, which is necessary
+# for overlaying methods called dynamically. By skipping the rewrite where we know it's ok, Julia compilation should 
+# take less time. It must be called on the top level for precompilation and in `__init__` for runtime.
+function muscle_skip_rewrites()
     Reactant.@skip_rewrite_func Muscle.binary_einsum
     Reactant.@skip_rewrite_func Muscle.nonunique
     Reactant.@skip_rewrite_type Type{<:Muscle.Index}
     Reactant.@skip_rewrite_type Type{<:Muscle.Tensor}
+end
+
+function __init__()
+    muscle_skip_rewrites()
+end
+
+if Reactant.Reactant_jll.is_available()
+    @setup_workload begin
+        muscle_skip_rewrites()
+
+        # Initialize the MLIR dialects and set up the XLA client
+        # NOTE taken from https://github.com/EnzymeAD/Reactant.jl/blob/77a9c694c4004cf08b270d08f8a5f51b7bdbf97e/src/Precompile.jl#L57-L83
+        Reactant.initialize_dialect()
+        if Reactant.XLA.REACTANT_XLA_RUNTIME == "PJRT"
+            client = Reactant.XLA.PJRT.CPUClient(; checkcount=false)
+        elseif Reactant.XLA.REACTANT_XLA_RUNTIME == "IFRT"
+            client = Reactant.XLA.IFRT.CPUClient(; checkcount=false)
+        else
+            error("Unsupported runtime: $(Reactant.XLA.REACTANT_XLA_RUNTIME)")
+        end
+
+        @compile_workload begin
+            @static if Reactant.precompilation_supported()
+                for (Ta, Tb) in [
+                    (Float32, Float32),
+                    (Float64, Float64),
+                    (ComplexF32, ComplexF32),
+                    (ComplexF64, ComplexF64),
+                    (Float64, ComplexF64),
+                    (ComplexF64, Float64),
+                ]
+                    a = Tensor(Reactant.to_rarray(ones(Ta, 2, 2); client), [:i, :j])
+                    b = Tensor(Reactant.to_rarray(ones(Tb, 2, 2); client), [:j, :k])
+                    Reactant.compile(Muscle.binary_einsum, (a, b); client, optimize=:all)
+                end
+            end
+        end
+
+        # clean deinitialization
+        Reactant.XLA.free_client(client)
+        client.client = C_NULL
+        Reactant.deinitialize_dialect()
+        Reactant.clear_oc_cache()
+    end
 end
 
 end
