@@ -158,7 +158,7 @@ function __init__()
     muscle_skip_rewrites()
 end
 
-if Reactant.Reactant_jll.is_available()
+@static if Reactant.Reactant_jll.is_available() && Reactant.precompilation_supported()
     @setup_workload begin
         muscle_skip_rewrites()
 
@@ -174,19 +174,17 @@ if Reactant.Reactant_jll.is_available()
         end
 
         @compile_workload begin
-            @static if Reactant.precompilation_supported()
-                for (Ta, Tb) in [
-                    (Float32, Float32),
-                    (Float64, Float64),
-                    (ComplexF32, ComplexF32),
-                    (ComplexF64, ComplexF64),
-                    (Float64, ComplexF64),
-                    (ComplexF64, Float64),
-                ]
-                    a = Tensor(Reactant.to_rarray(ones(Ta, 2, 2); client), [:i, :j])
-                    b = Tensor(Reactant.to_rarray(ones(Tb, 2, 2); client), [:j, :k])
-                    Reactant.compile(Muscle.binary_einsum, (a, b); client, optimize=:all)
-                end
+            for (Ta, Tb) in [
+                (Float32, Float32),
+                (Float64, Float64),
+                (ComplexF32, ComplexF32),
+                (ComplexF64, ComplexF64),
+                (Float64, ComplexF64),
+                (ComplexF64, Float64),
+            ]
+                a = Tensor(Reactant.to_rarray(ones(Ta, 2, 2); client), [:i, :j])
+                b = Tensor(Reactant.to_rarray(ones(Tb, 2, 2); client), [:j, :k])
+                Reactant.compile(Muscle.binary_einsum, (a, b); client, optimize=:all)
             end
         end
 
