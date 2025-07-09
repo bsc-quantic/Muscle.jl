@@ -172,9 +172,20 @@ Base.IndexStyle(T::Type{<:Tensor}) = IndexStyle(parent_type(T))
 
 Return the element of the tensor at the given indices. If kwargs are provided, then it is equivalent to calling [`view`](@ref).
 """
-@propagate_inbounds Base.getindex(t::Tensor, i...) = getindex(parent(t), i...)
+@propagate_inbounds Base.getindex(t::Tensor, i::Integer...) = getindex(parent(t), i...)
+@propagate_inbounds function Base.getindex(t::Tensor, i::Pair{<:Index}...; view=true)
+    v = Base.view(t, i...)
+    if !view
+        return Tensor(collect(parent(v)), inds(v))
+    end
+    return v
+end
+@propagate_inbounds function Base.getindex(t::Tensor, kv::Pair...; kwargs...)
+    getindex(t, [Pair(k isa Index ? k : Index(k), v) for (k, v) in kv]...; kwargs...)
+end
+
 @propagate_inbounds function Base.getindex(t::Tensor; i...)
-    length(i) == 0 && return (getindex ∘ parent)(t)
+    length(i) == 0 && return getindex(parent(t))
     # WARN `label.tag` might not be stable
     return getindex(t, [get(i, label.tag, Colon()) for label in inds(t)]...)
 end
