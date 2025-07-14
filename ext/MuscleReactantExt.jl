@@ -158,42 +158,42 @@ function __init__()
     muscle_skip_rewrites()
 end
 
-@static if Reactant.Reactant_jll.is_available() && Reactant.precompilation_supported()
-    @setup_workload begin
-        muscle_skip_rewrites()
+# @static if Reactant.Reactant_jll.is_available() && Reactant.precompilation_supported()
+#     @setup_workload begin
+#         muscle_skip_rewrites()
 
-        # Initialize the MLIR dialects and set up the XLA client
-        # NOTE taken from https://github.com/EnzymeAD/Reactant.jl/blob/77a9c694c4004cf08b270d08f8a5f51b7bdbf97e/src/Precompile.jl#L57-L83
-        Reactant.initialize_dialect()
-        if Reactant.XLA.REACTANT_XLA_RUNTIME == "PJRT"
-            client = Reactant.XLA.PJRT.CPUClient(; checkcount=false)
-        elseif Reactant.XLA.REACTANT_XLA_RUNTIME == "IFRT"
-            client = Reactant.XLA.IFRT.CPUClient(; checkcount=false)
-        else
-            error("Unsupported runtime: $(Reactant.XLA.REACTANT_XLA_RUNTIME)")
-        end
+#         # Initialize the MLIR dialects and set up the XLA client
+#         # NOTE taken from https://github.com/EnzymeAD/Reactant.jl/blob/77a9c694c4004cf08b270d08f8a5f51b7bdbf97e/src/Precompile.jl#L57-L83
+#         Reactant.initialize_dialect()
+#         if Reactant.XLA.REACTANT_XLA_RUNTIME == "PJRT"
+#             client = Reactant.XLA.PJRT.CPUClient(; checkcount=false)
+#         elseif Reactant.XLA.REACTANT_XLA_RUNTIME == "IFRT"
+#             client = Reactant.XLA.IFRT.CPUClient(; checkcount=false)
+#         else
+#             error("Unsupported runtime: $(Reactant.XLA.REACTANT_XLA_RUNTIME)")
+#         end
 
-        @compile_workload begin
-            for (Ta, Tb) in [
-                (Float32, Float32),
-                (Float64, Float64),
-                (ComplexF32, ComplexF32),
-                (ComplexF64, ComplexF64),
-                (Float64, ComplexF64),
-                (ComplexF64, Float64),
-            ]
-                a = Tensor(Reactant.to_rarray(ones(Ta, 2, 2); client), [:i, :j])
-                b = Tensor(Reactant.to_rarray(ones(Tb, 2, 2); client), [:j, :k])
-                Reactant.compile(Muscle.binary_einsum, (a, b); client, optimize=:all)
-            end
-        end
+#         @compile_workload begin
+#             for (Ta, Tb) in [
+#                 (Float32, Float32),
+#                 (Float64, Float64),
+#                 (ComplexF32, ComplexF32),
+#                 (ComplexF64, ComplexF64),
+#                 (Float64, ComplexF64),
+#                 (ComplexF64, Float64),
+#             ]
+#                 a = Tensor(Reactant.to_rarray(ones(Ta, 2, 2); client), [:i, :j])
+#                 b = Tensor(Reactant.to_rarray(ones(Tb, 2, 2); client), [:j, :k])
+#                 Reactant.compile(Muscle.binary_einsum, (a, b); client, optimize=:all)
+#             end
+#         end
 
-        # clean deinitialization
-        Reactant.XLA.free_client(client)
-        client.client = C_NULL
-        Reactant.deinitialize_dialect()
-        Reactant.clear_oc_cache()
-    end
-end
+#         # clean deinitialization
+#         Reactant.XLA.free_client(client)
+#         client.client = C_NULL
+#         Reactant.deinitialize_dialect()
+#         Reactant.clear_oc_cache()
+#     end
+# end
 
 end
