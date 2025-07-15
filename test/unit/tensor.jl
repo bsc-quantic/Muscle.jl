@@ -334,30 +334,30 @@ end
     end
 end
 
-@testset "expand" begin
+@testset "extend" begin
     data = rand(2, 2, 2)
     tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=1)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 1
         @test selectdim(new, Index(:x), 1) == tensor
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=3)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=3)
         @test inds(new) == [Index(:i), Index(:j), Index(:x), Index(:k)]
         @test size(new, Index(:x)) == 1
         @test selectdim(new, Index(:x), 1) == tensor
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1, size=2, method=:zeros)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=1, size=2, method=:zeros)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 2
         @test selectdim(new, Index(:x), 1) == tensor
         @test selectdim(new, Index(:x), 2) == Tensor(zeros(size(data)...), inds(tensor))
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1, size=2, method=:repeat)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=1, size=2, method=:repeat)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 2
         @test selectdim(new, Index(:x), 1) == tensor

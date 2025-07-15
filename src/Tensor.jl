@@ -343,21 +343,21 @@ Base.transpose(t::Tensor{T,1,A}) where {T,A<:AbstractArray{T,1}} = copy(t)
 Base.transpose(t::Tensor{T,2,A}) where {T,A<:AbstractArray{T,2}} = Tensor(transpose(parent(t)), reverse(inds(t)))
 
 """
-    expand(tensor::Tensor; label[, axis=1, size=1, method=:zeros])
+    extend(tensor::Tensor; label[, axis=1, size=1, method=:zeros])
 
 Expand the tensor by adding a new dimension `label` with the given `size` at the specified `axis`.
 Currently the supported methods are `:zeros` and `:repeat`.
 """
-function expand(tensor::Tensor; label, axis=1, size=1, method=:zeros)
+function extend(tensor::Tensor; label, axis=1, size=1, method=:zeros)
     array = parent(tensor)
     data = if size == 1
         reshape(array, Base.size(array)[1:(axis - 1)]..., 1, Base.size(array)[axis:end]...)
     elseif method === :zeros
-        expand_zeros(array, axis, size)
+        extend_zeros(array, axis, size)
     elseif method === :repeat
-        expand_repeat(array, axis, size)
+        extend_repeat(array, axis, size)
     else
-        # method === :identity ? __expand_identity(array, axis, size) :
+        # method === :identity ? __extend_identity(array, axis, size) :
         throw(ArgumentError("method \"$method\" is not valid"))
     end
 
@@ -366,7 +366,7 @@ function expand(tensor::Tensor; label, axis=1, size=1, method=:zeros)
     return Tensor(data, indices)
 end
 
-function expand_zeros(array, axis, size)
+function extend_zeros(array, axis, size)
     new = zeros(eltype(array), Base.size(array)[1:(axis - 1)]..., size, Base.size(array)[axis:end]...)
 
     view = selectdim(new, axis, 1)
@@ -375,7 +375,7 @@ function expand_zeros(array, axis, size)
     return new
 end
 
-function expand_repeat(array, axis, size)
+function extend_repeat(array, axis, size)
     return repeat(
         reshape(array, Base.size(array)[1:(axis - 1)]..., 1, Base.size(array)[axis:end]...);
         outer=(fill(1, axis - 1)..., size, fill(1, ndims(array) - axis + 1)...),
