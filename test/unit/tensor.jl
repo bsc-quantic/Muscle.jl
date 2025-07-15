@@ -391,6 +391,37 @@ end
     end
 end
 
+@testset "Base.cat" begin
+    data = rand(2, 2, 2)
+    tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
+
+    @testset let pad = Tensor(zeros(3, 2, 2), [Index(:i), Index(:j), Index(:k)])
+        new = cat(tensor, pad; dims=Index(:i))
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:i)) == 5
+        @test view(new, Index(:i) => 1:2) == tensor
+        @test view(new, Index(:i) => 3:4) == pad
+    end
+
+    @testset let pad = Tensor(zeros(2, 3, 2), [Index(:i), Index(:j), Index(:k)])
+        new = cat(tensor, pad; dims=Index(:j))
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:j)) == 5
+        @test view(new, Index(:j) => 1:2) == tensor
+        @test view(new, Index(:j) => 3:5) == pad
+    end
+
+    @testset let pad = Tensor(zeros(2, 2, 3), [Index(:i), Index(:j), Index(:k)])
+        new = cat(tensor, pad; dims=Index(:k))
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:k)) == 5
+        @test view(new, Index(:k) => 1:2) == tensor
+        @test view(new, Index(:k) => 3:5) == pad
+    end
+
+    # TODO test cat on more than 1 dim
+end
+
 @testset "fuse" begin
     tensor = Tensor(rand(2, 3), [Index(:i), Index(:j)])
     grouped = Muscle.fuse(tensor, [Index(:i), Index(:j)])
