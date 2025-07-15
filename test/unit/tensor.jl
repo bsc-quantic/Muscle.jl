@@ -373,21 +373,26 @@ end
         @test inds(new) == [Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:i)) == 3
         @test view(new, Index(:i) => 1:2) == tensor
-        @test view(new, Index(:i) => 3) ≈ Tensor(zeros(size(data)...), inds(tensor))
+        @test view(new, Index(:i) => 3:3) ≈
+            Tensor(zeros(Tuple(ind == Index(:i) ? 1 : size(tensor, ind) for ind in inds(tensor))), inds(tensor))
     end
 
     let new = Muscle.expand(tensor, Index(:j), 3; method=:zeros)
         @test inds(new) == [Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:j)) == 3
         @test view(new, Index(:j) => 1:2) == tensor
-        @test view(new, Index(:j) => 3) ≈ Tensor(zeros(size(data)...), inds(tensor))
+        @test view(new, Index(:j) => 3:3) ≈
+            Tensor(zeros(Tuple(ind == Index(:j) ? 1 : size(tensor, ind) for ind in inds(tensor))), inds(tensor))
     end
 
     let new = Muscle.expand(tensor, Index(:i), 3; method=:rand)
         @test inds(new) == [Index(:i), Index(:j), Index(:k)]
-        @test size(new, Index(:j)) == 3
-        @test view(new, Index(:j) => 1:2) == tensor
-        @test !(view(new, Index(:j) => 3) ≈ Tensor(zeros(size(data)...), inds(tensor)))
+        @test size(new, Index(:i)) == 3
+        @test view(new, Index(:i) => 1:2) == tensor
+        @test !(
+            view(new, Index(:i) => 3:3) ≈
+            Tensor(zeros(Tuple(ind == Index(:i) ? 1 : size(tensor, ind) for ind in inds(tensor))), inds(tensor))
+        )
     end
 end
 
