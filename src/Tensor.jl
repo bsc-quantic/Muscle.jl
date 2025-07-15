@@ -423,6 +423,7 @@ The indices of the tensors must be equal, otherwise the second tensor will be pe
     `dims` must be a list of `Index`.
 """
 function Base.cat(a::Tensor, b::Tensor; dims)
+    dims = dims isa Index ? [dims] : dims
     @assert issetequal(inds(a), inds(b)) "Indices of tensors must be equal, got $(inds(a)) and $(inds(b))"
     @assert all(i -> size(a, i) == size(b, i), setdiff(inds(a), dims)) "Sizes of tensors must be equal in all dimensions except for the concatenation dimensions"
 
