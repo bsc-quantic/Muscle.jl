@@ -334,35 +334,97 @@ end
     end
 end
 
-@testset "expand" begin
+@testset "extend" begin
     data = rand(2, 2, 2)
     tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=1)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 1
         @test selectdim(new, Index(:x), 1) == tensor
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=3)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=3)
         @test inds(new) == [Index(:i), Index(:j), Index(:x), Index(:k)]
         @test size(new, Index(:x)) == 1
         @test selectdim(new, Index(:x), 1) == tensor
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1, size=2, method=:zeros)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=1, size=2, method=:zeros)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 2
         @test selectdim(new, Index(:x), 1) == tensor
         @test selectdim(new, Index(:x), 2) == Tensor(zeros(size(data)...), inds(tensor))
     end
 
-    let new = Muscle.expand(tensor; label=Index(:x), axis=1, size=2, method=:repeat)
+    let new = Muscle.extend(tensor; label=Index(:x), axis=1, size=2, method=:repeat)
         @test inds(new) == [Index(:x), Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:x)) == 2
         @test selectdim(new, Index(:x), 1) == tensor
         @test selectdim(new, Index(:x), 2) == tensor
     end
+end
+
+@testset "expand" begin
+    data = rand(2, 2, 2)
+    tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
+
+    let new = Muscle.expand(tensor, Index(:i), 3; method=:zeros)
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:i)) == 3
+        @test view(new, Index(:i) => 1:2) == tensor
+        @test view(new, Index(:i) => 3:3) ≈
+            Tensor(zeros(Tuple(ind == Index(:i) ? 1 : size(tensor, ind) for ind in inds(tensor))), inds(tensor))
+    end
+
+    let new = Muscle.expand(tensor, Index(:j), 3; method=:zeros)
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:j)) == 3
+        @test view(new, Index(:j) => 1:2) == tensor
+        @test view(new, Index(:j) => 3:3) ≈
+            Tensor(zeros(Tuple(ind == Index(:j) ? 1 : size(tensor, ind) for ind in inds(tensor))), inds(tensor))
+    end
+
+    let new = Muscle.expand(tensor, Index(:i), 3; method=:rand)
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:i)) == 3
+        @test view(new, Index(:i) => 1:2) == tensor
+        @test !(
+            view(new, Index(:i) => 3:3) ≈
+            Tensor(zeros(Tuple(ind == Index(:i) ? 1 : size(tensor, ind) for ind in inds(tensor))), inds(tensor))
+        )
+    end
+end
+
+@testset "Base.cat" begin
+    data = rand(2, 2, 2)
+    tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
+
+    @testset let pad = Tensor(zeros(3, 2, 2), [Index(:i), Index(:j), Index(:k)])
+        new = cat(tensor, pad; dims=Index(:i))
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:i)) == 5
+        @test view(new, Index(:i) => 1:2) == tensor
+        @test view(new, Index(:i) => 3:5) == pad
+    end
+
+    @testset let pad = Tensor(zeros(2, 3, 2), [Index(:i), Index(:j), Index(:k)])
+        new = cat(tensor, pad; dims=Index(:j))
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:j)) == 5
+        @test view(new, Index(:j) => 1:2) == tensor
+        @test view(new, Index(:j) => 3:5) == pad
+    end
+
+    @testset let pad = Tensor(zeros(2, 2, 3), [Index(:i), Index(:j), Index(:k)])
+        new = cat(tensor, pad; dims=Index(:k))
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:k)) == 5
+        @test view(new, Index(:k) => 1:2) == tensor
+        @test view(new, Index(:k) => 3:5) == pad
+    end
+
+    # TODO test cat on more than 1 dim
 end
 
 @testset "fuse" begin
