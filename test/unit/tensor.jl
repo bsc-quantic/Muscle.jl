@@ -405,7 +405,7 @@ end
         @test inds(new) == [Index(:i), Index(:j), Index(:k)]
         @test size(new, Index(:i)) == 5
         @test view(new, Index(:i) => 1:2) == tensor
-        @test view(new, Index(:i) => 3:4) == pad
+        @test view(new, Index(:i) => 3:5) == pad
     end
 
     @testset let pad = Tensor(zeros(2, 3, 2), [Index(:i), Index(:j), Index(:k)])
