@@ -409,6 +409,22 @@ function expand(tensor::Tensor, ind::Index, _size; method=:zeros)
     return Tensor(new_data, inds(tensor))
 end
 
+Base.cat(tensor::Tensor) = tensor
+
+function Base.cat(a::Tensor, b::Tensor; dims=inds(a))
+    @assert issetequal(inds(a), inds(b)) "Indices of tensors must be equal, got $(inds(a)) and $(inds(b))"
+
+    if inds(a) != inds(b)
+        b = permutedims(b, inds(a))
+    end
+
+    _dims = map(Base.Fix1(dim, a), dims)
+    data = cat(parent(a), parent(b); dims=_dims)
+    return Tensor(data, inds(a))
+end
+
+Base.cat(tensors::Tensor...; kwargs...) = foldl((a, b) -> cat(a, b; kwargs...), tensors)
+
 LinearAlgebra.opnorm(x::Tensor, p::Real) = opnorm(parent(x), p)
 
 # TODO choose a new index name? currently choosing the first index of `parinds`
