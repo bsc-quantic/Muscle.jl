@@ -382,6 +382,33 @@ function extend_repeat(array, axis, size)
     )
 end
 
+# TODO expand on more than 1 axis
+"""
+    expand(tensor::Tensor, ind::Index, size; method=:zeros)
+
+Pad the tensor along the dimension specified by `ind` to reach new `size`.
+Supported methods are `:zeros` and `:rand`.
+"""
+function expand(tensor::Tensor, ind::Index, _size; method=:zeros)
+    @assert size(tensor, ind) <= _size "New size $_size of index $ind must be bigger than or equal to $(size(tensor, ind))"
+    size(tensor, ind) == _size && return tensor # TODO return copy instead?
+    axis = dim(tensor, ind)
+
+    # TODO use `similar` to do just 1 allocation and set via `views`
+    pad_size = [i == axis ? _size - size(tensor, i) : size(tensor, i) for i in 1:ndims(tensor)]
+    pad_data = if method === :zeros
+        zeros(eltype(tensor), Tuple(pad_size))
+    elseif method === :rand
+        rand(eltype(tensor), Tuple(pad_size))
+    else
+        throw(ArgumentError("method \"$method\" is not valid"))
+    end
+
+    # TODO expand in more axis?
+    new_data = cat(parent(tensor), pad_data; dims=axis)
+    return Tensor(new_data, inds(tensor))
+end
+
 LinearAlgebra.opnorm(x::Tensor, p::Real) = opnorm(parent(x), p)
 
 # TODO choose a new index name? currently choosing the first index of `parinds`
