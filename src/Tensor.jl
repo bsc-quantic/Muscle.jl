@@ -411,6 +411,17 @@ end
 
 Base.cat(tensor::Tensor) = tensor
 
+"""
+    Base.cat(a::Tensor, b::Tensor; dims)
+
+Concatenate two tensors `a` and `b` along the specified dimensions `dims`.
+
+The indices of the tensors must be equal, otherwise the second tensor will be permuted to match the first one.
+
+!!! note
+
+    `dims` must be a list of `Index`.
+"""
 function Base.cat(a::Tensor, b::Tensor; dims)
     @assert issetequal(inds(a), inds(b)) "Indices of tensors must be equal, got $(inds(a)) and $(inds(b))"
 
