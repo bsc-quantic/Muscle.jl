@@ -411,7 +411,7 @@ end
 
 Base.cat(tensor::Tensor) = tensor
 
-function Base.cat(a::Tensor, b::Tensor; dims=inds(a))
+function Base.cat(a::Tensor, b::Tensor; dims)
     @assert issetequal(inds(a), inds(b)) "Indices of tensors must be equal, got $(inds(a)) and $(inds(b))"
 
     if inds(a) != inds(b)
