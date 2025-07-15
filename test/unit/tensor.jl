@@ -365,6 +365,32 @@ end
     end
 end
 
+@testset "expand" begin
+    data = rand(2, 2, 2)
+    tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
+
+    let new = Muscle.expand(tensor, Index(:i), 3; method=:zeros)
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:i)) == 3
+        @test view(new, Index(:i) => 1:2) == tensor
+        @test view(new, Index(:i) => 3) ≈ Tensor(zeros(size(data)...), inds(tensor))
+    end
+
+    let new = Muscle.expand(tensor, Index(:j), 3; method=:zeros)
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:j)) == 3
+        @test view(new, Index(:j) => 1:2) == tensor
+        @test view(new, Index(:j) => 3) ≈ Tensor(zeros(size(data)...), inds(tensor))
+    end
+
+    let new = Muscle.expand(tensor, Index(:i), 3; method=:rand)
+        @test inds(new) == [Index(:i), Index(:j), Index(:k)]
+        @test size(new, Index(:j)) == 3
+        @test view(new, Index(:j) => 1:2) == tensor
+        @test !(view(new, Index(:j) => 3) ≈ Tensor(zeros(size(data)...), inds(tensor)))
+    end
+end
+
 @testset "fuse" begin
     tensor = Tensor(rand(2, 3), [Index(:i), Index(:j)])
     grouped = Muscle.fuse(tensor, [Index(:i), Index(:j)])
