@@ -464,6 +464,9 @@ end
 function Base._mapreduce_dim(f, op, init, tensor::Tensor, ind::Index)
     Base._mapreduce_dim(f, op, init, parent(tensor), dim(tensor, ind))
 end
+function Base._mapreduce_dim(f, op, init, tensor::Tensor, c::Colon)
+    Base._mapreduce_dim(f, op, init, parent(tensor), c)
+end
 function Base._mapreduce_dim(f, op, init, tensor::Tensor, dims)
     Base._mapreduce_dim(f, op, init, parent(tensor), dim.((tensor,), dims))
 end
