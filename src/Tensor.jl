@@ -460,3 +460,14 @@ function fuse(tensor::Tensor, parinds; ind=first(parinds))
     newinds = [filter(∉(parinds), inds(tensor))..., ind]
     return Tensor(data, newinds)
 end
+
+function Base._mapreduce_dim(f, op, init, tensor::Tensor, ind::Index)
+    Base._mapreduce_dim(f, op, init, parent(tensor), dim(tensor, ind))
+end
+function Base._mapreduce_dim(f, op, init, tensor::Tensor, dims)
+    Base._mapreduce_dim(f, op, init, parent(tensor), dim.((tensor,), dims))
+end
+
+Base._sum(tensor::Tensor, ind::Index; kwargs...) = Base._sum(parent(tensor), dim(tensor, ind); kwargs...)
+Base._sum(tensor::Tensor, c::Colon; kwargs...) = Tensor(fill(Base._sum(parent(tensor), c; kwargs...)))
+Base._sum(tensor::Tensor, dims; kwargs...) = Base._sum(parent(tensor), dim.((tensor,), dims); kwargs...)
