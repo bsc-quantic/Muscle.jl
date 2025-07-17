@@ -471,6 +471,6 @@ function Base._mapreduce_dim(f, op, init, tensor::Tensor, dims)
     Base._mapreduce_dim(f, op, init, parent(tensor), dim.((tensor,), dims))
 end
 
-Base._sum(tensor::Tensor, ind::Index; kwargs...) = Base._sum(parent(tensor), dim(tensor, ind); kwargs...)
-Base._sum(tensor::Tensor, c::Colon; kwargs...) = Tensor(fill(Base._sum(parent(tensor), c; kwargs...)))
-Base._sum(tensor::Tensor, dims; kwargs...) = Base._sum(parent(tensor), dim.((tensor,), dims); kwargs...)
+Base._sum(x::Tensor, ind::Index; kwargs...) = Tensor(Base._sum(parent(x), dim(x, ind); kwargs...), inds(x))
+Base._sum(x::Tensor, c::Colon; kwargs...) = Tensor(fill(Base._sum(parent(x), c; kwargs...)))
+Base._sum(x::Tensor, dims; kwargs...) = Tensor(Base._sum(parent(x), dim.((x,), dims); kwargs...), inds(x))
