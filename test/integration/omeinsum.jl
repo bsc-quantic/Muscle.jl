@@ -22,15 +22,15 @@ using OMEinsum
         @testset let A = Tensor(ones(2, 3, 4), [Index(:i), Index(:j), Index(:k)])
             Ar = unary_einsum(A; dims=inds(A))
             @test isempty(inds(Ar))
-            @test parent(Ar) ≈ fill(sum(A))
+            @test Ar ≈ sum(A)
 
             Ar = unary_einsum(A; out=Index[])
             @test isempty(inds(Ar))
-            @test parent(Ar) ≈ fill(sum(A))
+            @test Ar ≈ sum(A)
 
             B = Tensor(zeros())
             unary_einsum!(B, A)
-            @test parent(B) ≈ fill(sum(A))
+            @test B ≈ sum(A)
         end
     end
 

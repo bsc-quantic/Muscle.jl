@@ -442,3 +442,12 @@ end
     grouped = Muscle.fuse(tensor, [Index(:j), Index(:i)])
     @test reshape(permutedims(parent(tensor), [2, 3, 1]), 3, 8) ≈ parent(grouped)
 end
+
+@testset "sum" begin
+    tensor = Tensor(ones(Int, 2, 3, 4), [Index(:i), Index(:j), Index(:k)])
+
+    @test sum(tensor) == Tensor(fill(sum(parent(tensor))))
+    @test sum(tensor; dims=Index(:i)) == sum(tensor; dims=1) == Tensor(sum(parent(tensor); dims=1), inds(tensor))
+    @test sum(tensor; dims=Index(:j)) == sum(tensor; dims=2) == Tensor(sum(parent(tensor); dims=2), inds(tensor))
+    @test sum(tensor; dims=Index(:k)) == sum(tensor; dims=3) == Tensor(sum(parent(tensor); dims=3), inds(tensor))
+end
