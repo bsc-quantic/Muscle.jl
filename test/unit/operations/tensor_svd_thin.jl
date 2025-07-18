@@ -1,5 +1,5 @@
 using Test
-using Muscle: Muscle, Tensor, Index
+using Muscle
 
 # TODO numeric test with non-random data
 # TODO test on NVIDIA GPU
@@ -31,3 +31,5 @@ U, s, V = Muscle.tensor_svd_thin(A; inds_u=[Index(:i), Index(:j)], ind_s=Index(:
 @test size(V) == (6, 8, 8)
 
 @test isapprox(Muscle.binary_einsum(Muscle.hadamard(U, s), V), A)
+@test isisometry(U, Index(:x))
+@test isisometry(V, Index(:x))
