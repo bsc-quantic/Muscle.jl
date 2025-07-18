@@ -17,7 +17,9 @@ struct Tensor{T,N,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
             throw(ArgumentError("ndims(data) [$(ndims(data))] must be equal to length(inds) [$(length(inds))]"))
         end
 
-        if !all(i -> allequal(Iterators.map(dim -> size(data, dim), findall(==(i), inds))), nonunique(inds))
+        _nonunique_inds = nonunique(inds)
+        if !isempty(_nonunique_inds) &&
+            !all(i -> allequal(Iterators.map(dim -> size(data, dim), findall(==(i), inds))), _nonunique_inds)
             throw(DimensionMismatch("nonuniform size of repeated indices"))
         end
 
@@ -173,6 +175,8 @@ Base.IndexStyle(T::Type{<:Tensor}) = IndexStyle(parent_type(T))
 Return the element of the tensor at the given indices. If kwargs are provided, then it is equivalent to calling [`view`](@ref).
 """
 @propagate_inbounds Base.getindex(t::Tensor, i::Integer...) = getindex(parent(t), i...)
+@propagate_inbounds Base.getindex(t::Tensor, i...) = getindex(parent(t), i...)
+
 @propagate_inbounds function Base.getindex(t::Tensor, i::Pair{<:Index}...; view=true)
     v = Base.view(t, i...)
     if !view
@@ -180,8 +184,9 @@ Return the element of the tensor at the given indices. If kwargs are provided, t
     end
     return v
 end
+
 @propagate_inbounds function Base.getindex(t::Tensor, kv::Pair...; kwargs...)
-    getindex(t, [Pair(k isa Index ? k : Index(k), v) for (k, v) in kv]...; kwargs...)
+    getindex(t, Pair{<:Index}[Index(k)::Index => v for (k, v) in kv]...; kwargs...)
 end
 
 @propagate_inbounds function Base.getindex(t::Tensor; i...)
@@ -198,6 +203,12 @@ end
 Set the element of the tensor at the given indices to `v`. If kwargs are provided, then it is equivalent to calling `.=` on [`view`](@ref).
 """
 @propagate_inbounds Base.setindex!(t::Tensor, v, i...) = setindex!(parent(t), v, i...)
+@propagate_inbounds function Base.setindex!(t::Tensor, v, i::Pair...)
+    tv = getindex(t, i...; view=true)
+    setindex!(parent(tv), v, :)
+    return t
+end
+
 @propagate_inbounds function Base.setindex!(t::Tensor, v; i...)
     length(i) == 0 && return setindex!(parent(t), v)
     return setindex!(t, v, [get(i, label, Colon()) for label in inds(t)]...)
@@ -261,10 +272,11 @@ Return a view of the tensor where the index for dimension `dim` equals `i`.
 See also: [`selectdim`](@ref)
 """
 Base.selectdim(t::Tensor, d::Integer, i) = Tensor(selectdim(parent(t), d, i), inds(t))
-function Base.selectdim(t::Tensor, d::Integer, i::Integer)
+
+function Base.selectdim(t::Tensor{T,N}, d::Integer, i::Integer) where {T,N}
     data = selectdim(parent(t), d, i)
-    indices = [label for (i, label) in enumerate(inds(t)) if i != d]
-    return Tensor(data, indices)
+    indices = Index[label for (i, label) in enumerate(inds(t)) if i != d]
+    return Tensor{T,N - 1,typeof(data)}(data, indices)
 end
 
 Base.selectdim(t::Tensor, d, i) = selectdim(t, dim(t, d), i)
@@ -313,20 +325,35 @@ Return a view of the tensor with the given indices. If a `Pair` is given, the in
     This method doesn't return a `SubArray`, but a `Tensor` wrapping a `SubArray`.
 """
 function Base.view(t::Tensor, i...)
-    return Tensor(view(parent(t), i...), [label for (label, j) in zip(inds(t), i) if !(j isa Integer)])
+    return Tensor(view(parent(t), i...), inds_singleton(t, i))
 end
 
-function Base.view(t::Tensor, indices::P...) where {I<:Index,P<:Base.Pair{I}}
-    indices = map(inds(t)) do ind
-        i = findfirst(x -> x == ind, first.(indices))
-        !isnothing(i) ? indices[i].second : Colon()
-    end
+inds_singleton(t::Tensor, i) = inds(t)[view_singleton_mask(Val(ndims(t)), i)]
 
-    let data = view(parent(t), indices...),
-        indices = [label for (index, label) in zip(indices, inds(t)) if !(index isa Integer)]
-
-        Tensor(data, indices)
+function view_singleton_mask(::Val{N}, i) where {N}
+    mask = falses(N)
+    for (idx, ii) in enumerate(i)
+        mask[idx] = ii isa Integer ? false : true
     end
+    return mask
+end
+
+function _getindex_canonical_keys(t::Tensor, kv)
+    _inds = Any[]
+    sizehint!(_inds, ndims(t))
+    for ind in inds(t)
+        i = findfirst(x -> x == ind, Iterators.map(first, kv))
+        push!(_inds, !isnothing(i) ? kv[i].second : Colon())
+    end
+    return _inds
+end
+
+function Base.view(t::Tensor, kv::Pair...)
+    _inds = _getindex_canonical_keys(t, kv)
+    data = view(parent(t), _inds...)
+    _inds = inds_singleton(t, _inds)
+
+    Tensor(data, _inds)
 end
 
 # NOTE: `conj` is automatically managed because `Tensor` inherits from `AbstractArray`,

@@ -136,24 +136,135 @@ end
     @test Base.unsafe_convert(Ptr{Float64}, tensor) == Base.unsafe_convert(Ptr{Float64}, parent(tensor))
 end
 
+@testset "Base.getindex" begin
+    data = [1 2; 3 4]
+    tensor = Tensor(data, [Index(:i), Index(:j)])
+
+    @test tensor[1, 1] == 1
+    @test tensor[1, 2] == 2
+    @test tensor[2, 1] == 3
+    @test tensor[2, 2] == 4
+
+    # indexing with `Index`
+    @test tensor[Index(:i) => 1, Index(:j) => 1] == 1
+    @test tensor[Index(:i) => 1, Index(:j) => 2] == 2
+    @test tensor[Index(:i) => 2, Index(:j) => 1] == 3
+    @test tensor[Index(:i) => 2, Index(:j) => 2] == 4
+
+    @test tensor[:i => 1, :j => 1] == 1
+    @test tensor[:i => 1, :j => 2] == 2
+    @test tensor[:i => 2, :j => 1] == 3
+    @test tensor[:i => 2, :j => 2] == 4
+
+    # special case for `Index{Symbol}`
+    @test tensor[i=1, j=1] == 1
+    @test tensor[i=1, j=2] == 2
+    @test tensor[i=2, j=1] == 3
+    @test tensor[i=2, j=2] == 4
+
+    # partial indexing
+    @test tensor[1, :] == [1, 2]
+    @test tensor[2, :] == [3, 4]
+    @test tensor[:, 1] == [1, 3]
+    @test tensor[:, 2] == [2, 4]
+
+    @test tensor[:, :] isa Matrix{Int} && tensor[:, :] == data
+    @test tensor[:] isa Vector{Int} && tensor[:] == data[:]
+
+    @test tensor[Index(:i) => 1] == [1, 2]
+    @test tensor[Index(:i) => 2] == [3, 4]
+    @test tensor[Index(:j) => 1] == [1, 3]
+    @test tensor[Index(:j) => 2] == [2, 4]
+
+    @test tensor[:i => 1] == [1, 2]
+    @test tensor[:i => 2] == [3, 4]
+    @test tensor[:j => 1] == [1, 3]
+    @test tensor[:j => 2] == [2, 4]
+
+    @test tensor[i=1] == [1, 2]
+    @test tensor[i=2] == [3, 4]
+    @test tensor[j=1] == [1, 3]
+    @test tensor[j=2] == [2, 4]
+
+    # issue: check that `Index` of different tag types work
+    tensor = Tensor(data, [Index(:i), Index(0)])
+
+    @test tensor[Index(:i) => 1, Index(0) => 1] == 1
+    @test tensor[Index(:i) => 1, Index(0) => 2] == 2
+    @test tensor[Index(:i) => 2, Index(0) => 1] == 3
+    @test tensor[Index(:i) => 2, Index(0) => 2] == 4
+
+    @test tensor[:i => 1, 0 => 1] == 1
+    @test tensor[:i => 1, 0 => 2] == 2
+    @test tensor[:i => 2, 0 => 1] == 3
+    @test tensor[:i => 2, 0 => 2] == 4
+end
+
+@testset "setindex!" begin
+    data = [1 2; 3 4]
+    tensor = Tensor(data, [Index(:i), Index(0)])
+
+    @testset let tensor = copy(tensor)
+        tensor[1, 1] = 0
+        @test tensor[1, 1] == 0
+    end
+
+    @testset let tensor = copy(tensor)
+        # TODO fix broadcasting `.=`
+        tensor[Index(:i) => 1, Index(0) => 1] .= 0
+        @test tensor[1, 1] == 0
+    end
+
+    @testset let tensor = copy(tensor)
+        # TODO fix broadcasting `.=`
+        tensor[:i => 1, 0 => 1] .= 0
+        @test tensor[1, 1] == 0
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[1, :] = [5, 5]
+        @test tensor[1, :] == [5, 5]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[Index(:i) => 1] = [5, 5]
+        @test tensor[1, :] == [5, 5]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[:i => 1] = [5, 5]
+        @test tensor[1, :] == [5, 5]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[:, 1] = [6, 6]
+        @test tensor[:, 1] == [6, 6]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[Index(:j) => 1] = [6, 6]
+        @test tensor[:, 1] == [6, 6]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[:j => 1] = [6, 6]
+        @test tensor[:, 1] == [6, 6]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[:, :] = data * 5
+        @test tensor[:, :] == data * 5
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[:] = data[:] * 10
+        @test tensor[:] == data[:] * 10
+    end
+end
+
 @testset "Indexing" begin
     data = [1 2; 3 4]
     tensor = Tensor(copy(data), [Index(:i), Index(:j)])
-
-    @testset "getindex" begin
-        @test tensor[1, 1] == 1
-        @test tensor[1, 2] == 2
-        @test tensor[2, 1] == 3
-        @test tensor[2, 2] == 4
-
-        @test tensor[1, :] == [1, 2]
-        @test tensor[2, :] == [3, 4]
-        @test tensor[:, 1] == [1, 3]
-        @test tensor[:, 2] == [2, 4]
-
-        @test tensor[:, :] isa Matrix{Int} && tensor[:, :] == data
-        @test tensor[:] isa Vector{Int} && tensor[:] == data[:]
-    end
 
     @testset "setindex!" begin
         tensor[1, 1] = 0
