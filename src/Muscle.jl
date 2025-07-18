@@ -8,7 +8,7 @@ include("Index.jl")
 export Index
 
 include("Tensor.jl")
-export Tensor
+export Tensor, isisometry
 
 include("Domain.jl")
 include("Backend.jl")
