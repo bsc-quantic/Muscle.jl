@@ -211,12 +211,14 @@ end
 
     @testset let tensor = copy(tensor)
         # TODO fix broadcasting `.=`
+        # tensor[Index(:i) => 1, Index(0) => 1] = 0
         tensor[Index(:i) => 1, Index(0) => 1] .= 0
         @test tensor[1, 1] == 0
     end
 
     @testset let tensor = copy(tensor)
         # TODO fix broadcasting `.=`
+        # tensor[:i => 1, 0 => 1] = 0
         tensor[:i => 1, 0 => 1] .= 0
         @test tensor[1, 1] == 0
     end

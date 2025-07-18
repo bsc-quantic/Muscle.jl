@@ -205,6 +205,7 @@ Set the element of the tensor at the given indices to `v`. If kwargs are provide
 @propagate_inbounds Base.setindex!(t::Tensor, v, i...) = setindex!(parent(t), v, i...)
 @propagate_inbounds function Base.setindex!(t::Tensor, v, i::Pair...)
     tv = getindex(t, i...; view=true)
+    # TODO import code from `getindex` to fix the need of broadcasting `.=`
     setindex!(parent(tv), v, :)
     return t
 end
