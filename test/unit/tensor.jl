@@ -1,5 +1,6 @@
 using Test
 using Muscle: Tensor, Index, dim
+using LinearAlgebra: LinearAlgebra
 
 @testset "Constructors" begin
     @testset "Number" begin
@@ -450,4 +451,19 @@ end
     @test sum(tensor; dims=Index(:i)) == sum(tensor; dims=1) == Tensor(sum(parent(tensor); dims=1), inds(tensor))
     @test sum(tensor; dims=Index(:j)) == sum(tensor; dims=2) == Tensor(sum(parent(tensor); dims=2), inds(tensor))
     @test sum(tensor; dims=Index(:k)) == sum(tensor; dims=3) == Tensor(sum(parent(tensor); dims=3), inds(tensor))
+end
+
+@testset "isisometry" begin
+    tensor = Tensor(collect(LinearAlgebra.I(8)), [Index(:i), Index(:j)])
+    @test isisometry(tensor, Index(:i))
+    @test isisometry(tensor, Index(:j))
+
+    tensor = Tensor(reshape(collect(LinearAlgebra.I(8)), 2, 4, 8), [Index(:i), Index(:j), Index(:k)])
+    @test !isisometry(tensor, Index(:i))
+    @test !isisometry(tensor, Index(:j))
+    @test isisometry(tensor, Index(:k))
+
+    tensor = Tensor(ones(8, 8), [Index(:i), Index(:j)])
+    @test !isisometry(tensor, Index(:i))
+    @test !isisometry(tensor, Index(:j))
 end

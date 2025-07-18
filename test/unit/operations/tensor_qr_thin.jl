@@ -1,5 +1,5 @@
 using Test
-using Muscle: Muscle, Tensor, Index
+using Muscle
 
 # TODO numeric test with non-random data
 # TODO test on NVIDIA GPU
@@ -30,3 +30,4 @@ Q, R = Muscle.tensor_qr_thin(A; inds_q=[Index(:i), Index(:j)], ind_virtual)
 @test size(R) == (8, 6, 8)
 
 @test isapprox(Muscle.binary_einsum(Q, R), A)
+@test isisometry(Q, ind_virtual)

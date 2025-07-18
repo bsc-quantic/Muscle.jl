@@ -479,3 +479,21 @@ end
 Base._sum(x::Tensor, ind::Index; kwargs...) = Tensor(Base._sum(parent(x), dim(x, ind); kwargs...), inds(x))
 Base._sum(x::Tensor, c::Colon; kwargs...) = Tensor(fill(Base._sum(parent(x), c; kwargs...)))
 Base._sum(x::Tensor, dims; kwargs...) = Tensor(Base._sum(parent(x), dim.((x,), dims); kwargs...), inds(x))
+
+function isisometry(tensor::Tensor, ind; atol::Real=1e-12)
+    # legacy behavior
+    if isnothing(ind)
+        return isapprox(parent(binary_einsum(tensor, conj(tensor))), fill(true); atol)
+    end
+
+    @assert ind in inds(tensor) "Index $ind is not in the tensor indices $(inds(tensor))"
+
+    inda, indb = Index(gensym(:a)), Index(gensym(:b))
+    a = replace(tensor, ind => inda)
+    b = replace(conj(tensor), ind => indb)
+
+    n = size(tensor, ind)
+    contracted = binary_einsum(a, b)
+
+    return isapprox(contracted, LinearAlgebra.I(n); atol)
+end
