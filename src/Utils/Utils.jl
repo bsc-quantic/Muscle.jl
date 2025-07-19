@@ -13,13 +13,15 @@ function nonunique(x)
 
     for xi in x
         if xi in seen
-            push!(repeated, xi)
+            if !(xi in repeated)
+                push!(repeated, xi)
+            end
         else
             push!(seen, xi)
         end
     end
 
-    return repeated
+    return collect(repeated)
 end
 
 include("ImmutableArray.jl")
