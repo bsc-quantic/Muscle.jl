@@ -8,8 +8,8 @@ function nonunique(x)
     # return Tuple(unique(x[nonuniqueindexes]))
 
     # NOTE `IdSet` is faster than `Set` for this purpose becasue we avoid computing `hash`
-    seen = IdSet{eltype(x)}()
-    repeated = IdSet{eltype(x)}()
+    seen = Base.IdSet{eltype(x)}()
+    repeated = Base.IdSet{eltype(x)}()
 
     for xi in x
         if xi in seen
