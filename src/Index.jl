@@ -5,6 +5,7 @@ end
 # TODO checkout whether this is a good idea
 Base.copy(x::Index) = x
 
+Index(ind::Index) = ind
 Index(name::String) = Index(Symbol(name))
 
 function Base.show(io::IO, ind::Index)
