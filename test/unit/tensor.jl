@@ -136,9 +136,9 @@ end
     @test Base.unsafe_convert(Ptr{Float64}, tensor) == Base.unsafe_convert(Ptr{Float64}, parent(tensor))
 end
 
-@testset "Base.getindex" begin
+@testset "getindex" begin
     data = [1 2; 3 4]
-    tensor = Tensor(data, [Index(:i), Index(:j)])
+    tensor = Tensor(data, [Index(:i), Index(0)])
 
     @test tensor[1, 1] == 1
     @test tensor[1, 2] == 2
@@ -146,49 +146,6 @@ end
     @test tensor[2, 2] == 4
 
     # indexing with `Index`
-    @test tensor[Index(:i) => 1, Index(:j) => 1] == 1
-    @test tensor[Index(:i) => 1, Index(:j) => 2] == 2
-    @test tensor[Index(:i) => 2, Index(:j) => 1] == 3
-    @test tensor[Index(:i) => 2, Index(:j) => 2] == 4
-
-    @test tensor[:i => 1, :j => 1] == 1
-    @test tensor[:i => 1, :j => 2] == 2
-    @test tensor[:i => 2, :j => 1] == 3
-    @test tensor[:i => 2, :j => 2] == 4
-
-    # special case for `Index{Symbol}`
-    @test tensor[i=1, j=1] == 1
-    @test tensor[i=1, j=2] == 2
-    @test tensor[i=2, j=1] == 3
-    @test tensor[i=2, j=2] == 4
-
-    # partial indexing
-    @test tensor[1, :] == [1, 2]
-    @test tensor[2, :] == [3, 4]
-    @test tensor[:, 1] == [1, 3]
-    @test tensor[:, 2] == [2, 4]
-
-    @test tensor[:, :] isa Matrix{Int} && tensor[:, :] == data
-    @test tensor[:] isa Vector{Int} && tensor[:] == data[:]
-
-    @test tensor[Index(:i) => 1] == [1, 2]
-    @test tensor[Index(:i) => 2] == [3, 4]
-    @test tensor[Index(:j) => 1] == [1, 3]
-    @test tensor[Index(:j) => 2] == [2, 4]
-
-    @test tensor[:i => 1] == [1, 2]
-    @test tensor[:i => 2] == [3, 4]
-    @test tensor[:j => 1] == [1, 3]
-    @test tensor[:j => 2] == [2, 4]
-
-    @test tensor[i=1] == [1, 2]
-    @test tensor[i=2] == [3, 4]
-    @test tensor[j=1] == [1, 3]
-    @test tensor[j=2] == [2, 4]
-
-    # issue: check that `Index` of different tag types work
-    tensor = Tensor(data, [Index(:i), Index(0)])
-
     @test tensor[Index(:i) => 1, Index(0) => 1] == 1
     @test tensor[Index(:i) => 1, Index(0) => 2] == 2
     @test tensor[Index(:i) => 2, Index(0) => 1] == 3
@@ -198,31 +155,68 @@ end
     @test tensor[:i => 1, 0 => 2] == 2
     @test tensor[:i => 2, 0 => 1] == 3
     @test tensor[:i => 2, 0 => 2] == 4
+
+    # special case for `Index{Symbol}`
+    @testset let tensor = replace(tensor, Index(0) => Index(:j))
+        @test tensor[i=1, j=1] == 1
+        @test tensor[i=1, j=2] == 2
+        @test tensor[i=2, j=1] == 3
+        @test tensor[i=2, j=2] == 4
+    end
+
+    # partial indexing
+    @test tensor[1, :] == [1, 2]
+    @test tensor[2, :] == [3, 4]
+    @test tensor[:, 1] == [1, 3]
+    @test tensor[:, 2] == [2, 4]
+
+    @test tensor[:, :] == data[:, :]
+    @test tensor[:] == data[:]
+
+    @test tensor[Index(:i) => 1] == [1, 2]
+    @test tensor[Index(:i) => 2] == [3, 4]
+    @test tensor[Index(0) => 1] == [1, 3]
+    @test tensor[Index(0) => 2] == [2, 4]
+
+    @test tensor[:i => 1] == [1, 2]
+    @test tensor[:i => 2] == [3, 4]
+    @test tensor[0 => 1] == [1, 3]
+    @test tensor[0 => 2] == [2, 4]
+
+    @testset let tensor = replace(tensor, Index(0) => Index(:j))
+        @test tensor[i=1] == [1, 2]
+        @test tensor[i=2] == [3, 4]
+        @test tensor[j=1] == [1, 3]
+        @test tensor[j=2] == [2, 4]
+    end
+
+    # 0-dim indexing
+    @testset let tensor = Tensor(fill(1))
+        @test tensor[] == 1
+    end
 end
 
 @testset "setindex!" begin
     data = [1 2; 3 4]
     tensor = Tensor(data, [Index(:i), Index(0)])
 
+    # assign scalar
     @testset let tensor = copy(tensor)
         tensor[1, 1] = 0
         @test tensor[1, 1] == 0
     end
 
     @testset let tensor = copy(tensor)
-        # TODO fix broadcasting `.=`
-        # tensor[Index(:i) => 1, Index(0) => 1] = 0
-        tensor[Index(:i) => 1, Index(0) => 1] .= 0
+        tensor[Index(:i) => 1, Index(0) => 1] = 0
         @test tensor[1, 1] == 0
     end
 
     @testset let tensor = copy(tensor)
-        # TODO fix broadcasting `.=`
-        # tensor[:i => 1, 0 => 1] = 0
-        tensor[:i => 1, 0 => 1] .= 0
+        tensor[:i => 1, 0 => 1] = 0
         @test tensor[1, 1] == 0
     end
 
+    # assign array
     @testset let tensor = copy(tensor)
         tensor[1, :] = [5, 5]
         @test tensor[1, :] == [5, 5]
@@ -244,12 +238,12 @@ end
     end
 
     @testset let tensor = copy(tensor)
-        tensor[Index(:j) => 1] = [6, 6]
+        tensor[Index(0) => 1] = [6, 6]
         @test tensor[:, 1] == [6, 6]
     end
 
     @testset let tensor = copy(tensor)
-        tensor[:j => 1] = [6, 6]
+        tensor[0 => 1] = [6, 6]
         @test tensor[:, 1] == [6, 6]
     end
 
@@ -261,30 +255,47 @@ end
     @testset let tensor = copy(tensor)
         tensor[:] = data[:] * 10
         @test tensor[:] == data[:] * 10
+    end
+
+    # broadcasting assignment
+    @testset let tensor = copy(tensor)
+        tensor[1, :] .= 5
+        @test tensor[1, :] == [5, 5]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[Index(:i) => 1] .= 5
+        @test tensor[1, :] == [5, 5]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[:i => 1] .= 5
+        @test tensor[1, :] == [5, 5]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[:, 1] .= 6
+        @test tensor[:, 1] == [6, 6]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[Index(0) => 1] .= 6
+        @test tensor[:, 1] == [6, 6]
+    end
+
+    @testset let tensor = copy(tensor)
+        tensor[0 => 1] .= 6
+        @test tensor[:, 1] == [6, 6]
+    end
+
+    # 0-dim assignment
+    @testset let tensor = Tensor(fill(1))
+        tensor[] = 2
+        @test tensor[] == 2
     end
 end
 
-@testset "Indexing" begin
-    data = [1 2; 3 4]
-    tensor = Tensor(copy(data), [Index(:i), Index(:j)])
-
-    @testset "setindex!" begin
-        tensor[1, 1] = 0
-        @test tensor[1, 1] == 0
-
-        tensor[1, :] = [5, 5]
-        @test tensor[1, :] == [5, 5]
-
-        tensor[:, 1] = [6, 6]
-        @test tensor[:, 1] == [6, 6]
-
-        tensor[:, :] = data * 5
-        @test tensor[:, :] == data * 5
-
-        tensor[:] = data[:] * 10
-        @test tensor[:] == data[:] * 10
-    end
-
+@testset "other indexing methods" begin
     data = rand(2, 2, 2)
     tensor = Tensor(data, [Index(:i), Index(:j), Index(:k)])
 
@@ -296,11 +307,6 @@ end
     @test axes(tensor) == axes(data)
     @test first(tensor) == first(data)
     @test last(tensor) == last(data)
-    @test tensor[1, :, 2] == data[1, :, 2]
-    @test tensor[i=1, k=2] == data[1, :, 2]
-
-    tensor[1] = 0
-    @test tensor[1] == data[1]
 
     for i in [0, -1, length(tensor) + 1]
         @test_throws BoundsError tensor[i]
@@ -378,6 +384,65 @@ end
 
     @test parent(view(tensor, Index(:i) => 1:1)) == view(data, (1:1), :, :)
     @test Index(:i) ∈ inds(view(tensor, Index(:i) => 1:1))
+
+    data = [1 2; 3 4]
+    tensor = Tensor(data, [Index(:i), Index(0)])
+
+    @test @view(tensor[1, 1]) == Tensor(fill(1))
+    @test @view(tensor[1, 2]) == Tensor(fill(2))
+    @test @view(tensor[2, 1]) == Tensor(fill(3))
+    @test @view(tensor[2, 2]) == Tensor(fill(4))
+
+    # indexing with `Index`
+    @test @view(tensor[Index(:i) => 1, Index(0) => 1]) == Tensor(fill(1))
+    @test @view(tensor[Index(:i) => 1, Index(0) => 2]) == Tensor(fill(2))
+    @test @view(tensor[Index(:i) => 2, Index(0) => 1]) == Tensor(fill(3))
+    @test @view(tensor[Index(:i) => 2, Index(0) => 2]) == Tensor(fill(4))
+
+    @test @view(tensor[:i => 1, 0 => 1]) == Tensor(fill(1))
+    @test @view(tensor[:i => 1, 0 => 2]) == Tensor(fill(2))
+    @test @view(tensor[:i => 2, 0 => 1]) == Tensor(fill(3))
+    @test @view(tensor[:i => 2, 0 => 2]) == Tensor(fill(4))
+
+    # special case for `Index{Symbol}`
+    @testset let tensor = replace(tensor, Index(0) => Index(:j))
+        @test @view(tensor[i=1, j=1]) == Tensor(fill(1))
+        @test @view(tensor[i=1, j=2]) == Tensor(fill(2))
+        @test @view(tensor[i=2, j=1]) == Tensor(fill(3))
+        @test @view(tensor[i=2, j=2]) == Tensor(fill(4))
+    end
+
+    # partial indexing
+    @test @view(tensor[1, :]) == Tensor([1, 2], [Index(0)])
+    @test @view(tensor[2, :]) == Tensor([3, 4], [Index(0)])
+    @test @view(tensor[:, 1]) == Tensor([1, 3], [Index(:i)])
+    @test @view(tensor[:, 2]) == Tensor([2, 4], [Index(:i)])
+
+    @test @view(tensor[:, :]) == Tensor(@view(data[:, :]), [Index(:i), Index(0)])
+    @test @view(tensor[:]) == Tensor(@view(data[:]), [Index(:i)])
+
+    @test @view(tensor[Index(:i) => 1]) == Tensor([1, 2], [Index(0)])
+    @test @view(tensor[Index(:i) => 2]) == Tensor([3, 4], [Index(0)])
+    @test @view(tensor[Index(0) => 1]) == Tensor([1, 3], [Index(:i)])
+    @test @view(tensor[Index(0) => 2]) == Tensor([2, 4], [Index(:i)])
+
+    @test @view(tensor[:i => 1]) == Tensor([1, 2], [Index(0)])
+    @test @view(tensor[:i => 2]) == Tensor([3, 4], [Index(0)])
+    @test @view(tensor[0 => 1]) == Tensor([1, 3], [Index(:i)])
+    @test @view(tensor[0 => 2]) == Tensor([2, 4], [Index(:i)])
+
+    @testset let tensor = replace(tensor, Index(0) => Index(:j))
+        @test @view(tensor[i=1]) == Tensor([1, 2], [Index(:j)])
+        @test @view(tensor[i=2]) == Tensor([3, 4], [Index(:j)])
+        @test @view(tensor[j=1]) == Tensor([1, 3], [Index(:i)])
+        @test @view(tensor[j=2]) == Tensor([2, 4], [Index(:i)])
+    end
+
+    # 0-dim indexing
+    @testset let tensor = Tensor(fill(1))
+        @test @view(tensor[]) == Tensor(@view(parent(tensor)[]))
+        @test @view(tensor[])[] == 1
+    end
 end
 
 @testset "permutedims" begin
