@@ -18,8 +18,6 @@ Perform eigen factorization on a tensor. Either `inds_u` or `inds_uinv` must be 
 """
 function tensor_eigen_thin end
 function tensor_eigen_thin! end
-function tensor_bieigen_thin end
-function tensor_bieigen_thin! end
 
 function tensor_bieigen_thin end
 function tensor_bieigen_thin! end
