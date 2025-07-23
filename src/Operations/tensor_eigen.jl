@@ -55,7 +55,7 @@ function tensor_eigen_thin(
     left_sizes = map(Base.Fix1(size, A), inds_uinv)
     right_sizes = map(Base.Fix1(size, A), inds_u)
 
-    Amat = permutedims(A, [inds_uinv; inds_u])
+    Amat = permutedims(A, [inds_u; inds_uinv])
     Amat = reshape(parent(Amat), prod(left_sizes), prod(right_sizes))
 
     # compute eigen
@@ -67,7 +67,8 @@ function tensor_eigen_thin(
 
     # tensorify results
     Λ = Tensor(F.values, [ind_lambda])
-    U = Tensor(reshape(F.vectors, size(F.vectors, 2), right_sizes...), [inds_u; ind_lambda])
+    #U = Tensor(reshape(F.vectors, size(F.vectors, 2), right_sizes...), [inds_u; ind_lambda])
+    U = Tensor(reshape(F.vectors, left_sizes..., size(F.vectors, 2)), [inds_u; ind_lambda])
 
     return Λ, U
 end
