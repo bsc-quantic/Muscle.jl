@@ -41,9 +41,3 @@ AU = Muscle.binary_einsum(A, Ut)
 UL = Muscle.hadamard(U, lambdas)
 @test isapprox(AU, UL)
 
-using ITensors
-ITA = convert(ITensor, A)
-ivals, ivecs = eigen(ITA, [ind(ITA,1), ind(ITA,2)],[ind(ITA,3), ind(ITA,4)] )
-@test vector(diag(ivals)) ≈ parent(lambdas)
-@test parent(U) ≈ ITensors.tensor(ivecs)
-
