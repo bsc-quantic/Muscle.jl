@@ -35,11 +35,10 @@ lambdas, U = Muscle.tensor_eigen_thin(A; inds_u=[Index(:l1), Index(:l2)], ind_la
 @test size(U) == (8, 4, 32)
 @test size(lambdas) == (32,)
 
-Ut = replace(U, Index(:l1) => Index(:r1), Index(:l2) => Index(:r2))
-
-AU = Muscle.binary_einsum(A, Ut)
-UL = Muscle.binary_einsum(U, lambdas; dims=Index[])
 # Test AU ≈ UΛ  (right eigenvectors)
+Ut = replace(U, Index(:l1) => Index(:r1), Index(:l2) => Index(:r2))
+AU = Muscle.binary_einsum(A, Ut)
+UL = Muscle.hadamard(U, lambdas)
 @test isapprox(AU, UL)
 
 using ITensors
