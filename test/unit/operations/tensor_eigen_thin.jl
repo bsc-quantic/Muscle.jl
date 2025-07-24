@@ -2,7 +2,7 @@ using Test
 using Muscle: Muscle, Tensor, Index
 using LinearAlgebra
 
-A = rand(4,4)
+A = rand(4, 4)
 L, U = eigen(A)
 A * U ≈ U * Diagonal(L)
 
@@ -40,4 +40,3 @@ Ut = replace(U, Index(:l1) => Index(:r1), Index(:l2) => Index(:r2))
 AU = Muscle.binary_einsum(A, Ut)
 UL = Muscle.hadamard(U, lambdas)
 @test isapprox(AU, UL)
-
