@@ -92,7 +92,7 @@ function tensor_svd_thin(
 end
 
 function tensor_svd_thin!(::BackendBase, U::Tensor, s::Tensor, V::Tensor, A::Tensor; kwargs...)
-    @warn "tensor_svd_thing! on BackendBase does intermediate copying. Consider using `tensor_svd_thin`."
+    @warn "tensor_svd_thin! on BackendBase does intermediate copying. Consider using `tensor_svd_thin`."
 
     tmp_U, tmp_s, tmp_V = tensor_svd_thin(
         BackendBase(), A; inds_u=inds(U), inds_v=inds(V), ind_s=only(inds(s)), kwargs...
@@ -116,3 +116,73 @@ function tensor_svd_thin!(::BackendBase, U::Tensor, s::Tensor, V::Tensor, A::Ten
 
     return U, s, V
 end
+
+
+# TODO backend 
+function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff, maxdim, kwargs...
+)
+    inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
+    @argcheck isdisjoint(inds_u, inds_v)
+    @argcheck issetequal(inds_u ∪ inds_v, inds(A))
+    @argcheck ind_s ∉ inds(A)
+
+    # permute array
+    left_sizes = map(Base.Fix1(size, A), inds_u)
+    right_sizes = map(Base.Fix1(size, A), inds_v)
+    Amat = permutedims(A, [inds_u..., inds_v...])
+    Amat = reshape(parent(Amat), prod(left_sizes), prod(right_sizes))
+
+    # compute SVD
+    U, s, V = if inplace
+        LinearAlgebra.svd!(Amat; kwargs...)
+    else
+        LinearAlgebra.svd(Amat; kwargs...)
+    end
+
+    keep = findall(sv -> sv ≥ cutoff, s)
+    # Keep at most maxsv largest valid singular values
+    k = min(length(keep), maxdim)
+    inds_keep = keep[1:k]
+
+    U = U[:, inds_keep]
+    s = s[inds_keep]
+    V = V[:, inds_keep]
+
+    # tensorify results
+    U = Tensor(reshape(U, left_sizes..., size(U, 2)), [inds_u; ind_s])
+    s = Tensor(s, [ind_s])
+    Vt = Tensor(reshape(conj(V), right_sizes..., size(V, 2)), [inds_v; ind_s])
+
+    return U, s, Vt
+end
+
+
+
+
+function tensor_svd_trunc_alt(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff, maxdim, kwargs...
+)
+    inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
+
+    left_sizes = map(Base.Fix1(size, A), inds_u)
+    right_sizes = map(Base.Fix1(size, A), inds_v)
+
+    # TODO I don't know how to pass the backend here 
+    U, s, Vt = tensor_svd_thin(A; inds_u, inds_v, ind_s, inplace, kwargs...)
+
+    keep = findall(sv -> sv ≥ cutoff, s)
+    # Keep at most maxsv largest valid singular values
+    k = min(length(keep), maxdim)
+    keep_inds = keep[1:k]
+
+    U = U[:, keep_inds]
+    s = s[keep_inds]
+    Vt = Vt[keep_inds, :]
+
+    # tensorify results
+    U = Tensor(reshape(U, left_sizes..., size(U, 2)), [inds_u; ind_s])
+    s = Tensor(s, [ind_s])
+    Vt = Tensor(reshape(Vt, size(s,1), right_sizes...), [ind_s; inds_v])
+
+    return U, s, Vt
+end
+
