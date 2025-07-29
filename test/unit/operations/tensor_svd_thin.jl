@@ -20,16 +20,16 @@ A = Tensor(rand(ComplexF64, 2, 4, 6, 8), [Index(:i), Index(:j), Index(:k), Index
 # throw if chosen virtual index already present
 @test_throws ArgumentError Muscle.tensor_svd_thin(A; inds_u=[Index(:i)], ind_s=Index(:j))
 
-U, s, V = Muscle.tensor_svd_thin(A; inds_u=[Index(:i), Index(:j)], ind_s=Index(:x))
+U, s, Vt = Muscle.tensor_svd_thin(A; inds_u=[Index(:i), Index(:j)], ind_s=Index(:x))
 
 @test inds(U) == [Index(:i), Index(:j), Index(:x)]
 @test inds(s) == [Index(:x)]
-@test inds(V) == [Index(:k), Index(:l), Index(:x)]
+@test inds(Vt) == [Index(:k), Index(:l), Index(:x)]
 
 @test size(U) == (2, 4, 8)
 @test size(s) == (8,)
-@test size(V) == (6, 8, 8)
+@test size(Vt) == (6, 8, 8)
 
-@test isapprox(Muscle.binary_einsum(Muscle.hadamard(U, s), V), A)
+@test isapprox(Muscle.binary_einsum(Muscle.hadamard(U, s), Vt), A)
 @test isisometry(U, Index(:x))
-@test isisometry(V, Index(:x))
+@test isisometry(Vt, Index(:x))
