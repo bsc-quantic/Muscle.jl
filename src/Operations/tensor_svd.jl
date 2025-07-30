@@ -147,13 +147,14 @@ function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:v
     # keep at most maxdim SV
     k = isnothing(maxdim) ? k : min(k, maxdim)
 
-    # TODO do we want to use views here ? 
-    @views begin
-    U = U[:, 1:k]
-    s = s[1:k]
-    V = V[:, 1:k]
+    if k < length(s)
+        # TODO do we want to use views here ? 
+        @views begin
+        U = U[:, 1:k]
+        s = s[1:k]
+        V = V[:, 1:k]
+        end
     end
-
     # tensorify results
     U = Tensor(reshape(U, left_sizes..., k), [inds_u; ind_s])
     s = Tensor(s, [ind_s])
