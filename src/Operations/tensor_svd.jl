@@ -119,7 +119,8 @@ end
 
 
 # TODO backend 
-function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff=1e-14, maxdim=nothing, kwargs...
+""" Truncate SVD. With these defaults, it could be used as inplace replacement for tensor_svd_thin """ 
+function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff=nothing, maxdim=nothing, kwargs...
 )
     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
     @argcheck isdisjoint(inds_u, inds_v)
@@ -140,7 +141,7 @@ function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:v
     end
 
     # cutoff is relative cutoff 
-    k = findfirst(sv -> sv < cutoff, s/norm(s))
+    k = isnothing(cutoff) ? nothing : findfirst(sv -> sv < cutoff, s/norm(s))
     k = isnothing(k) ? length(s) : k
 
     # keep at most maxdim SV
