@@ -119,7 +119,7 @@ end
 
 
 # TODO backend 
-function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff, maxdim, kwargs...
+function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff=1e-14, maxdim=nothing, kwargs...
 )
     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
     @argcheck isdisjoint(inds_u, inds_v)
@@ -139,11 +139,12 @@ function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:v
         LinearAlgebra.svd(Amat; kwargs...)
     end
 
-    k = findfirst(sv -> sv < cutoff, s)
+    # cutoff is relative cutoff 
+    k = findfirst(sv -> sv < cutoff, s/norm(s))
     k = isnothing(k) ? length(s) : k
 
     # keep at most maxdim SV
-    k = min(k, maxdim)
+    k = isnothing(maxdim) ? k : min(k, maxdim)
 
     # TODO do we want to use views here ? 
     @views begin
