@@ -139,26 +139,29 @@ function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:v
         LinearAlgebra.svd(Amat; kwargs...)
     end
 
-    keep = findall(sv -> sv ≥ cutoff, s)
-    # Keep at most maxsv largest valid singular values
-    k = min(length(keep), maxdim)
-    inds_keep = keep[1:k]
+    k = findfirst(sv -> sv < cutoff, s)
+    k = isnothing(k) ? length(s) : k
 
-    U = U[:, inds_keep]
-    s = s[inds_keep]
-    V = V[:, inds_keep]
+    # keep at most maxdim SV
+    k = min(k, maxdim)
+
+    # TODO do we want to use views here ? 
+    @views begin
+    U = U[:, 1:k]
+    s = s[1:k]
+    V = V[:, 1:k]
+    end
 
     # tensorify results
-    U = Tensor(reshape(U, left_sizes..., size(U, 2)), [inds_u; ind_s])
+    U = Tensor(reshape(U, left_sizes..., k), [inds_u; ind_s])
     s = Tensor(s, [ind_s])
-    Vt = Tensor(reshape(conj(V), right_sizes..., size(V, 2)), [inds_v; ind_s])
+    Vt = Tensor(reshape(conj(V), right_sizes..., k), [inds_v; ind_s])
 
     return U, s, Vt
 end
 
 
-
-
+# other version trying to reuse tensor_svd_thin but prob not worth it
 function tensor_svd_trunc_alt(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff, maxdim, kwargs...
 )
     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
