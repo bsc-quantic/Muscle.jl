@@ -10,6 +10,7 @@ using SafeTestsets
         @testset "binary_einsum" include("unit/operations/binary_einsum.jl")
         @testset "tensor_qr_thin" include("unit/operations/tensor_qr_thin.jl")
         @testset "tensor_svd_thin" include("unit/operations/tensor_svd_thin.jl")
+        @testset "tensor_svd_trunc" include("unit/operations/tensor_svd_trunc.jl")
         @testset "tensor_eigen_thin" include("unit/operations/tensor_eigen_thin.jl")
         @testset "simple_update" include("unit/operations/simple_update.jl")
     end
