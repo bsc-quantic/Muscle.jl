@@ -70,6 +70,24 @@ function tensor_svd_thin!(::Backend, args...; kwargs...)
     throw(ArgumentError("`tensor_svd_thin!` not implemented or not loaded for backend $(typeof(A))"))
 end
 
+function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:svd)), inplace=false, kwargs...)
+    backend = choose_backend(tensor_svd_trunc, A)
+    return tensor_svd_trunc(backend, A; inds_u, inds_v, ind_s, inplace, kwargs...)
+end
+
+function tensor_svd_trunc(::Backend, A; kwargs...)
+    throw(ArgumentError("`tensor_svd_trunc` not implemented or not loaded for backend $(typeof(A))"))
+end
+
+function tensor_svd_trunc!(Q::Tensor, R::Tensor, A::Tensor; kwargs...)
+    backend = choose_backend(tensor_svd_trunc!, Q, R, A)
+    return tensor_svd_trunc!(backend, Q, R, A; kwargs...)
+end
+
+function tensor_svd_trunc!(::Backend, args...; kwargs...)
+    throw(ArgumentError("`tensor_svd_trunc!` not implemented or not loaded for backend $(typeof(A))"))
+end
+
 ## `Base`
 function tensor_svd_thin(
     ::BackendBase, A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, kwargs...
