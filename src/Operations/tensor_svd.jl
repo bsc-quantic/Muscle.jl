@@ -25,6 +25,12 @@ choose_backend_rule(::typeof(tensor_svd_thin), ::DomainCUDA) = BackendCuTensorNe
 choose_backend_rule(::typeof(tensor_svd_thin!), ::Vararg{DomainHost,4}) = BackendBase()
 choose_backend_rule(::typeof(tensor_svd_thin!), ::Vararg{DomainCUDA,4}) = BackendCuTensorNet()
 
+choose_backend_rule(::typeof(tensor_svd_trunc), ::DomainHost) = BackendBase()
+choose_backend_rule(::typeof(tensor_svd_trunc), ::DomainCUDA) = BackendCuTensorNet()
+
+choose_backend_rule(::typeof(tensor_svd_trunc!), ::Vararg{DomainHost,4}) = BackendBase()
+choose_backend_rule(::typeof(tensor_svd_trunc!), ::Vararg{DomainCUDA,4}) = BackendCuTensorNet()
+
 # function allocate_result(::typeof(tensor_svd_thin), A; inds_u=(), inds_v=(), ind_s=Index(gensym(:s)), kwargs...)
 #     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
 #     left_extent = prod(Base.Fix1(size, A), inds_u)
@@ -117,10 +123,20 @@ function tensor_svd_thin!(::BackendBase, U::Tensor, s::Tensor, V::Tensor, A::Ten
     return U, s, V
 end
 
-
-# TODO backend 
-""" Truncate SVD. With these defaults, it could be used as inplace replacement for tensor_svd_thin """ 
-function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff=nothing, maxdim=nothing, kwargs...
+# TODO implement for cuTensorNet
+"""
+Truncate SVD. With these defaults, it could be used as inplace replacement for tensor_svd_thin
+"""
+function tensor_svd_trunc(
+    ::BackendBase,
+    A::Tensor;
+    inds_u=(),
+    inds_v=(),
+    ind_s=Index(gensym(:vind)),
+    inplace=false,
+    threshold=nothing,
+    maxdim=nothing,
+    kwargs...,
 )
     inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
     @argcheck isdisjoint(inds_u, inds_v)
@@ -140,55 +156,57 @@ function tensor_svd_trunc(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:v
         LinearAlgebra.svd(Amat; kwargs...)
     end
 
-    # cutoff is relative cutoff 
-    k = isnothing(cutoff) ? nothing : findfirst(sv -> sv < cutoff, s/norm(s))
-    k = isnothing(k) ? length(s) : k
+    # truncate singular values
+    k = length(s)
 
-    # keep at most maxdim SV
-    k = isnothing(maxdim) ? k : min(k, maxdim)
-
-    if k < length(s)
-        # TODO do we want to use views here ? 
-        @views begin
-        U = U[:, 1:k]
-        s = s[1:k]
-        V = V[:, 1:k]
-        end
+    # use `maxdim` to truncate the singular values
+    if !isnothing(maxdim)
+        k = min(k, maxdim)
     end
+
+    # use `threshold` to truncate the singular values
+    if !isnothing(threshold)
+        # threshold is relative threshold
+        threshold = norm(s) * threshold
+        k = findfirst(<(threshold), view(s, 1:k))
+    end
+
+    keep = 1:k
+
+    view_u = view(U, :, keep)
+    view_s = view(s, keep)
+    view_v = view(V, :, keep)
+
     # tensorify results
-    U = Tensor(reshape(U, left_sizes..., k), [inds_u; ind_s])
-    s = Tensor(s, [ind_s])
-    Vt = Tensor(reshape(conj(V), right_sizes..., k), [inds_v; ind_s])
+    U = Tensor(reshape(view_u, left_sizes..., k), [inds_u; ind_s])
+    s = Tensor(view_s, [ind_s])
+    Vt = Tensor(reshape(conj(view_v), right_sizes..., k), [inds_v; ind_s])
 
     return U, s, Vt
 end
 
+function tensor_svd_trunc!(::BackendBase, U::Tensor, s::Tensor, V::Tensor, A::Tensor; kwargs...)
+    @warn "tensor_svd_trunc! on BackendBase does intermediate copying. Consider using `tensor_svd_trunc`."
 
-# other version trying to reuse tensor_svd_thin but prob not worth it
-function tensor_svd_trunc_alt(A::Tensor; inds_u=(), inds_v=(), ind_s=Index(gensym(:vind)), inplace=false, cutoff, maxdim, kwargs...
-)
-    inds_u, inds_v = factorinds(inds(A), inds_u, inds_v)
+    tmp_U, tmp_s, tmp_V = tensor_svd_trunc(
+        BackendBase(), A; inds_u=inds(U), inds_v=inds(V), ind_s=only(inds(s)), kwargs...
+    )
 
-    left_sizes = map(Base.Fix1(size, A), inds_u)
-    right_sizes = map(Base.Fix1(size, A), inds_v)
+    @argcheck arch(tmp_U) == arch(U)
+    @argcheck arch(tmp_s) == arch(s)
+    @argcheck arch(tmp_V) == arch(V)
 
-    # TODO I don't know how to pass the backend here 
-    U, s, Vt = tensor_svd_thin(A; inds_u, inds_v, ind_s, inplace, kwargs...)
+    @argcheck inds(tmp_U) == inds(U)
+    @argcheck inds(tmp_s) == inds(s)
+    @argcheck inds(tmp_V) == inds(V)
 
-    keep = findall(sv -> sv ≥ cutoff, s)
-    # Keep at most maxsv largest valid singular values
-    k = min(length(keep), maxdim)
-    keep_inds = keep[1:k]
+    @argcheck size(tmp_U) == size(U)
+    @argcheck size(tmp_s) == size(s)
+    @argcheck size(tmp_V) == size(V)
 
-    U = U[:, keep_inds]
-    s = s[keep_inds]
-    Vt = Vt[keep_inds, :]
+    copyto!(U, tmp_U)
+    copyto!(s, tmp_s)
+    copyto!(V, tmp_V)
 
-    # tensorify results
-    U = Tensor(reshape(U, left_sizes..., size(U, 2)), [inds_u; ind_s])
-    s = Tensor(s, [ind_s])
-    Vt = Tensor(reshape(Vt, size(s,1), right_sizes...), [ind_s; inds_v])
-
-    return U, s, Vt
+    return U, s, V
 end
-
