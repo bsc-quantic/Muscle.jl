@@ -19,6 +19,9 @@ Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be speci
 function tensor_svd_thin end
 function tensor_svd_thin! end
 
+function tensor_svd_trunc end
+function tensor_svd_trunc! end
+
 choose_backend_rule(::typeof(tensor_svd_thin), ::DomainHost) = BackendBase()
 choose_backend_rule(::typeof(tensor_svd_thin), ::DomainCUDA) = BackendCuTensorNet()
 
