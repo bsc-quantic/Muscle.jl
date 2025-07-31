@@ -1,5 +1,6 @@
 using Test
 using Muscle
+using LinearAlgebra
 
 # TODO numeric test with non-random data
 # TODO test on NVIDIA GPU
@@ -38,6 +39,9 @@ A = Tensor(rand(ComplexF64, 200, 100), [Index(:i), Index(:j)])
 U, sfull, Vt = Muscle.tensor_svd_trunc(A; inds_u=Index(:i), ind_s=Index(:x))
 @test isapprox(Muscle.binary_einsum(Muscle.hadamard(U, sfull), Vt), A)
 
+U, s, Vt = Muscle.tensor_svd_trunc(A; inds_u=Index(:i), ind_s=Index(:x), threshold=1e-3)
+U, s, Vt = Muscle.tensor_svd_trunc(A; inds_u=Index(:i), ind_s=Index(:x), maxdim=20)
+
 # check that norm error = sum of discarded SV^2
-U, s, Vt = Muscle.tensor_svd_trunc(A; inds_u=Index(:i), ind_s=Index(:x), cutoff=1e-5, maxdim=80)
+U, s, Vt = Muscle.tensor_svd_trunc(A; inds_u=Index(:i), ind_s=Index(:x), threshold=1e-3, maxdim=80)
 @test norm(Muscle.binary_einsum(Muscle.hadamard(U, s), Vt) - A) ≈ norm(sfull[(length(s) + 1):end])
