@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 jobs:
   test:
-    name: Julia ${{ matrix.version }} / downgrade = ${{ matrix.downgrade }}
+    name: core + integration / Julia ${{ matrix.version }} / downgrade = ${{ matrix.downgrade }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -69,7 +69,7 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   python:
-    name: Julia ${{ matrix.version }}
+    name: python / Julia ${{ matrix.version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -100,7 +100,7 @@ jobs:
           pkg"instantiate"
           pkg"precompile"
         shell: julia --project=test/python/ --color=yes --inline=yes --depwarn=yes --coverage=true --check-bounds=yes {0}
-      - run: julia --project=test/python/ --color=yes --inline=yes --depwarn=yes --coverage=true --check-bounds=yes test/python/runtests.jl
+      - run: julia --project=test/python/ --color=yes --inline=yes --depwarn=yes --code-coverage=true --check-bounds=yes test/python/runtests.jl
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v2
         with:
