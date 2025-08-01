@@ -1,0 +1,9 @@
+[deps]
+Muscle = "21fe5c4b-a943-414d-bf3e-516f24900631"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+QuantumTags = "2406e0f5-9e5e-4424-966e-8bc9c78b228f"
+SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+Muscle = {path = "../.."}
