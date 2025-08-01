@@ -1,3 +1,7 @@
+using Pkg
+pkg"instantiate"
+pkg"precompile"
+
 using Test
 using SafeTestsets
 
