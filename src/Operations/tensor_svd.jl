@@ -19,13 +19,13 @@ Perform SVD factorization on a tensor. Either `inds_u` or `inds_v` must be speci
 function tensor_svd_thin end
 function tensor_svd_thin! end
 
-""" 
+"""
     Muscle.tensor_svd_trunc(tensor::Tensor; inds_u, inds_v, ind_s, threshold, maxbondim, kwargs...)
 
 Same as tensor_svd_thin() but with truncation, additional keyword arguments are
 
   - `threshold`: relative cutoff for singular values
-  - `maxdim`: maximum bond dimension 
+  - `maxdim`: maximum bond dimension
 """
 function tensor_svd_trunc end
 function tensor_svd_trunc! end
