@@ -99,7 +99,7 @@ jobs:
           using Pkg
           pkg"instantiate"
           pkg"precompile"
-        shell: julia --project=test/python/ --color=yes --inline=yes --depwarn=yes --coverage=true --check-bounds=yes {0}
+        shell: julia --project=test/python/ --color=yes --inline=yes --depwarn=yes --check-bounds=yes {0}
       - run: julia --project=test/python/ --color=yes --inline=yes --depwarn=yes --code-coverage=true --check-bounds=yes test/python/runtests.jl
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v2
