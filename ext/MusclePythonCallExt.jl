@@ -2,9 +2,11 @@ module MusclePythonCallExt
 
 using Muscle
 using PythonCall
+using PythonCall.Core: pyisnone
 using PythonCall.Convert: pyconvert_add_rule, pyconvert_return, pyconvert_unconverted
+using QuantumTags
 
-function pyconvert_rule_qiskit_instruction(T::Type{<:Tensor}, pyobj)
+function pyconvert_rule_qiskit_instruction(T, instr)
     # NOTE we discard any quantum register information: we only keep qubit index
     # NOTE add 1 to convert from Python's 0-based indexing to Julia's 1-based indexing
     lanes = map(x -> pyconvert(Int, x._index) + 1, instr.qubits)
@@ -18,7 +20,7 @@ function pyconvert_rule_qiskit_instruction(T::Type{<:Tensor}, pyobj)
 
     # if unassigned parameters, throw
     if pyisnone(matrix)
-        throw(ArgumentError("Expected parameters already assigned, but got $(pyobj.params)"))
+        throw(ArgumentError("Expected parameters already assigned, but got $(instr.params)"))
     end
 
     matrix = pyconvert(Array, matrix)
@@ -28,7 +30,7 @@ function pyconvert_rule_qiskit_instruction(T::Type{<:Tensor}, pyobj)
 end
 
 function __init__()
-    pyconvert_add_rule("qiskit._accelerate.circuit.CircuitInstruction", Tensor, pyconvert_rule_qiskit_instruction)
+    pyconvert_add_rule("qiskit._accelerate.circuit:CircuitInstruction", Tensor, pyconvert_rule_qiskit_instruction)
 end
 
 end
