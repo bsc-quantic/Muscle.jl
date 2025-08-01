@@ -1,5 +1,6 @@
 using Test
 using Muscle
+using QuantumTags
 using PythonCall
 qiskit = pyimport("qiskit")
 
