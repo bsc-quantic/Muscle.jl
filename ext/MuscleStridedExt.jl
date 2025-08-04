@@ -56,7 +56,7 @@ function Muscle.binary_einsum(
 
     sa = a
     sb = b
-    sc = Tensor(StridedView(zeros(Base.promote_eltype(a, b), Tuple(sizes_c)), Tuple(sizes_c)), inds_c)
+    sc = Tensor(StridedView(zeros(Base.promote_eltype(parent(a), parent(b)), Tuple(sizes_c)), Tuple(sizes_c)), inds_c)
 
     binary_einsum!(BackendStrided(), sc, sa, sb)
     return sc

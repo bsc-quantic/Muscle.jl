@@ -78,7 +78,7 @@ end
 
     @test !(tensor ≈ Tensor(data, [Index(:i), Index(:m), Index(:n), Index(:l)]))
     @test !(tensor ≈ Tensor(rand(2, 2, 2), [Index(:i), Index(:j), Index(:k)]))
-    @test !(tensor ≈ data)
+    @test tensor ≈ data
 end
 
 @testset "copy" begin
@@ -625,7 +625,7 @@ end
 @testset "sum" begin
     tensor = Tensor(ones(Int, 2, 3, 4), [Index(:i), Index(:j), Index(:k)])
 
-    @test sum(tensor) == Tensor(fill(sum(parent(tensor))))
+    @test sum(tensor) == Tensor(sum(parent(tensor)))
     @test sum(tensor; dims=Index(:i)) == sum(tensor; dims=1) == Tensor(sum(parent(tensor); dims=1), inds(tensor))
     @test sum(tensor; dims=Index(:j)) == sum(tensor; dims=2) == Tensor(sum(parent(tensor); dims=2), inds(tensor))
     @test sum(tensor; dims=Index(:k)) == sum(tensor; dims=3) == Tensor(sum(parent(tensor); dims=3), inds(tensor))

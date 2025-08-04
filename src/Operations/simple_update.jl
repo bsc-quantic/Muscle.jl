@@ -73,7 +73,7 @@ function simple_update(
     elseif absorb isa AbsorbV
         V = Muscle.hadamard!(V, V, S)
     elseif absorb isa AbsorbEqually
-        S_sqrt = sqrt.(S)
+        S_sqrt = Tensor(sqrt.(S), inds(S))
         U = Muscle.hadamard!(U, U, S_sqrt)
         V = Muscle.hadamard!(V, V, S_sqrt)
     end
