@@ -537,12 +537,12 @@ function isisometry(tensor::Tensor, ind; atol::Real=1e-12)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", t::Tensor{T}) where T
-        println(io, "Rank $(ndims(t)) Tensor{$T}, first element = $(first(t)) ")
-        println(io, "size | Index")
-        for i in inds(t)
-            println(io, "$(lpad(string(size(t, i)),4)) | $(i.tag)")
-        end
-    if ndims(t) < 3
+    println(io, "Rank $(ndims(t)) Tensor{$T}, first element = $(first(t)) ")
+    println(io, " size  | Index")
+    for i in inds(t)
+        println(io, "$(lpad(string(size(t, i)),6)) | $(i.tag)")
+    end
+    if length(t) < 100
         # For small tensors we can afford to call the default show
         invoke(Base.show, Tuple{IO, Any}, io, t)
     end
