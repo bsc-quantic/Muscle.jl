@@ -92,7 +92,7 @@ function binary_einsum(::BackendBase, inds_c, a::Tensor, b::Tensor)
     c_mat = a_mat * b_mat
 
     c = Tensor(reshape(c_mat, sizes_left..., sizes_right...), [inds_left; inds_right])
-    return permutedims(c, inds_c)
+    return c
 end
 
 function binary_einsum!(::BackendBase, c::Tensor, a::Tensor, b::Tensor)
