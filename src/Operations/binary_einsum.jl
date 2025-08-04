@@ -41,7 +41,7 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
         reorder_inds = true
         out
     end
-
+ 
     backend = choose_backend(binary_einsum, parent(a), parent(b))
     # if ismissing(backend)
     #     @warn "No backend found for binary_einsum(::$(typeof(a)), ::$(typeof(b))), so unwrapping data"
@@ -50,7 +50,14 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
     #     backend = choose_backend(binary_einsum, data_a, data_b)
     # end
 
-    return binary_einsum(backend, inds_c, a, b; reorder_inds)
+    c = if backend == Muscle.BackendBase()
+            binary_einsum(backend, inds_c, a, b; reorder_inds)
+        else
+            binary_einsum(backend, inds_c, a, b)
+        end
+
+    return c
+
 end
 
 function binary_einsum(::Backend, inds_c, a, b)
