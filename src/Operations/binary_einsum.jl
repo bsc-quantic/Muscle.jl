@@ -50,17 +50,12 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
     #     backend = choose_backend(binary_einsum, data_a, data_b)
     # end
 
-    c = if backend == Muscle.BackendBase()
-            binary_einsum(backend, inds_c, a, b; reorder_inds)
-        else
-            binary_einsum(backend, inds_c, a, b)
-        end
-
-    return c
+    return binary_einsum(backend, inds_c, a, b; reorder_inds)
+       
 
 end
 
-function binary_einsum(::Backend, inds_c, a, b)
+function binary_einsum(::Backend, inds_c, a, b; kwargs...)
     throw(ArgumentError("`binary_einsum` not implemented or not loaded for backend $(typeof(a))"))
 end
 
