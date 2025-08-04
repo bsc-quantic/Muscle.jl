@@ -1,4 +1,6 @@
 using Pkg
+# force dev install of Muscle.jl on GitHub CI
+Pkg.develop(; path=joinpath(@__DIR__, "..", ".."))
 pkg"instantiate"
 pkg"precompile"
 
