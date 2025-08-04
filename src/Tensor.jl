@@ -548,4 +548,5 @@ function Base.show(io::IO, ::MIME"text/plain", t::Tensor{T}) where T
     end
 end
 
-
+# Overload * for two MyType instances
+*(a::Tensor, b::Tensor) = binary_einsum(a,b)
