@@ -21,9 +21,7 @@ end
     @safetestset "OMEinsum" include("integration/omeinsum.jl")
     @safetestset "Strided" include("integration/strided.jl")
     @safetestset "Dagger" include("integration/dagger.jl")
-
-    #     include("integration/ChainRules_test.jl")
-
+    @safetestset "ChainRulesCore" include("integration/chainrules.jl")
     @safetestset "ITensors" include("integration/itensors.jl")
 
     if !isnothing(get(ENV, "MUSCLE_TEST_CUDA", nothing))

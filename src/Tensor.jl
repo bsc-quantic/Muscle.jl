@@ -4,17 +4,17 @@ using LinearAlgebra
 using Adapt
 
 """
-    Tensor{T,N,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
+    Tensor{T,N,A<:AbstractArray{T,N}}
 
 An array-like object with named dimensions (i.e. [`Index`](@ref)).
 """
-struct Tensor{T,N,A<:AbstractArray{T,N}} <: AbstractArray{T,N}
+struct Tensor{T,N,A<:AbstractArray{T,N}} # <: AbstractArray{T,N}
     data::A
     inds::ImmutableVector{Index}
 
     function Tensor(data::A, inds::ImmutableVector{I}) where {T,N,A<:AbstractArray{T,N},I<:Index}
         if length(inds) != N
-            throw(ArgumentError("ndims(data) [$(ndims(data))] must be equal to length(inds) [$(length(inds))]"))
+            throw(DimensionMismatch("ndims(data) [$(ndims(data))] must be equal to length(inds) [$(length(inds))]"))
         end
 
         _nonunique_inds = nonunique(inds)
@@ -42,7 +42,10 @@ Construct a tensor with the given data and indices.
 Tensor(data::A, inds::NTuple{N}) where {T,N,A<:AbstractArray{T,N}} = Tensor{T,N,A}(data, collect(inds))
 Tensor(data::AbstractArray{T,0}) where {T} = Tensor(data, Index[])
 Tensor(data::Number) = Tensor(fill(data))
-Tensor{T,N,A}(data::A, inds::AbstractVector) where {T,N,A<:AbstractArray{T,N}} = Tensor(data, ImmutableVector(inds))
+Tensor{T,N,A}(data::A, inds::ImmutableVector{<:Index}) where {T,N,A<:AbstractArray{T,N}} = Tensor(data, inds)
+function Tensor{T,N,A}(data::A, inds::AbstractVector) where {T,N,A<:AbstractArray{T,N}}
+    Tensor(data, ImmutableVector{Index}(inds))
+end
 
 # useful methods
 Tensor(data::AbstractArray, inds::Vector{Symbol}) = Tensor(data, map(Index, inds))
@@ -68,6 +71,7 @@ Return the indices of the `Tensor`.
 """
 inds(x::Tensor) = x.inds
 
+Base.copy(t::Tensor) = Tensor(copy(parent(t)), copy(inds(t)))
 Base.copy(t::Tensor{T,N,<:SubArray{T,N}}) where {T,N} = Tensor(copy(parent(t)), copy(inds(t)))
 Adapt.adapt_structure(to, x::Tensor) = Tensor(adapt(to, parent(x)), inds(x))
 
@@ -81,16 +85,10 @@ Return a uninitialize tensor of the same size, eltype and [`inds`](@ref) as `ten
 """
 Base.similar(t::Tensor; inds=inds(t)) = Tensor(similar(parent(t)), inds)
 Base.similar(t::Tensor, S::Type; inds=inds(t)) = Tensor(similar(parent(t), S), inds)
-function Base.similar(t::Tensor{T,N}, S::Type, dims::Base.Dims{N}; inds=inds(t)) where {T,N}
-    return Tensor(similar(parent(t), S, dims), inds)
-end
-function Base.similar(t::Tensor, ::Type, dims::Base.Dims{N}; kwargs...) where {N}
-    throw(DimensionMismatch("`dims` needs to be of length $(ndims(t))"))
-end
-Base.similar(t::Tensor{T,N}, dims::Base.Dims{N}; inds=inds(t)) where {T,N} = Tensor(similar(parent(t), dims), inds)
-function Base.similar(t::Tensor, dims::Base.Dims{N}; kwargs...) where {N}
-    throw(DimensionMismatch("`dims` needs to be of length $(ndims(t))"))
-end
+Base.similar(t::Tensor, S::Type, dims::Base.Dims; inds=inds(t)) = Tensor(similar(parent(t), S, dims), inds)
+Base.similar(t::Tensor, S::Type, dims::Int...; inds=inds(t)) = Tensor(similar(parent(t), S, dims), inds)
+Base.similar(t::Tensor, dims::Base.Dims; inds=inds(t)) = Tensor(similar(parent(t), dims), inds)
+Base.similar(t::Tensor, dims::Int...; inds=inds(t)) = Tensor(similar(parent(t), dims), inds)
 
 """
     Base.zero(tensor::Tensor)
@@ -99,27 +97,20 @@ Return a tensor of the same size, eltype and [`inds`](@ref) as `tensor` but fill
 """
 Base.zero(t::Tensor) = Tensor(zero(parent(t)), inds(t))
 
-Base.:(==)(a::AbstractArray, b::Tensor) = isequal(b, a)
-Base.:(==)(a::Tensor, b::AbstractArray) = isequal(a, b)
-Base.:(==)(a::Tensor, b::Tensor) = isequal(a, b)
-Base.isequal(a::AbstractArray, b::Tensor) = false
-Base.isequal(a::Tensor, b::AbstractArray) = false
-function Base.isequal(a::Tensor, b::Tensor)
+Base.:(==)(a::AbstractArray, b::Tensor) = false
+Base.:(==)(a::Tensor, b::AbstractArray) = false
+function Base.:(==)(a::Tensor, b::Tensor)
     issetequal(inds(a), inds(b)) || return false
-    perm = findperm(inds(a), inds(b))
-    return isequal(parent(a), PermutedDimsArray(parent(b), perm))
+    return parent(a) == parent(permutedims(b, inds(a)))
 end
+Base.:(==)(a::Tensor{A,0}, b::Tensor{B,0}) where {A,B} = only(a) == only(b)
 
-Base.isequal(a::Tensor{A,0}, b::Tensor{B,0}) where {A,B} = isequal(only(a), only(b))
-
-Base.isapprox(a::AbstractArray, b::Tensor) = false
-Base.isapprox(a::Tensor, b::AbstractArray) = false
 function Base.isapprox(a::Tensor, b::Tensor; kwargs...)
     issetequal(inds(a), inds(b)) || return false
-    perm = findperm(inds(a), inds(b))
-    return isapprox(parent(a), PermutedDimsArray(parent(b), perm); kwargs...)
+    return isapprox(parent(a), parent(permutedims(b, inds(a))); kwargs...)
 end
-
+Base.isapprox(a::AbstractArray, b::Tensor; kwargs...) = isapprox(b, a; kwargs...)
+Base.isapprox(a::Tensor, b::AbstractArray; kwargs...) = isapprox(parent(a), b; kwargs...)
 Base.isapprox(a::Tensor{T,0}, b::T; kwargs...) where {T} = isapprox(only(a), b; kwargs...)
 Base.isapprox(a::T, b::Tensor{T,0}; kwargs...) where {T} = isapprox(b, a; kwargs...)
 Base.isapprox(a::Tensor{A,0}, b::Tensor{B,0}; kwargs...) where {A,B} = isapprox(only(a), only(b); kwargs...)
@@ -157,15 +148,48 @@ dim(::Tensor, i::Number) = i
 dim(t::Tensor, i::Symbol) = dim(t, Index(i))
 dim(t::Tensor, i::Index) = findfirst(==(i), inds(t))
 
+# arithmetics
+function Base.:(+)(a::Tensor, b::Tensor)
+    @assert issetequal(inds(a), inds(b)) "Indices of tensors must match"
+    if inds(b) != inds(a)
+        b = permutedims(b, inds(a))
+    end
+    Tensor(parent(a) + parent(b), inds(a))
+end
+
+function Base.:(-)(a::Tensor, b::Tensor)
+    @assert issetequal(inds(a), inds(b)) "Indices of tensors must match"
+    if inds(b) != inds(a)
+        b = permutedims(b, inds(a))
+    end
+    Tensor(parent(a) - parent(b), inds(a))
+end
+
+Base._sum(f, x::Tensor, ind::Index; kwargs...) = Tensor(Base._sum(f, parent(x), dim(x, ind); kwargs...), inds(x))
+Base._sum(f, x::Tensor, c::Colon; kwargs...) = Tensor(fill(Base._sum(f, parent(x), c; kwargs...)))
+Base._sum(f, x::Tensor, dims; kwargs...) = Tensor(Base._sum(f, parent(x), dim.((x,), dims); kwargs...), inds(x))
+Base.sum(f, x::Tensor; dims=:, kwargs...) = Base._sum(f, x, dims; kwargs...)
+
+Base._prod(f, x::Tensor, ind::Index; kwargs...) = Tensor(Base._prod(f, parent(x), dim(x, ind); kwargs...), inds(x))
+Base._prod(f, x::Tensor, c::Colon; kwargs...) = Tensor(fill(Base._prod(f, parent(x), c; kwargs...)))
+Base._prod(f, x::Tensor, dims; kwargs...) = Tensor(Base._prod(f, parent(x), dim.((x,), dims); kwargs...), inds(x))
+Base.prod(f, x::Tensor; dims=:, kwargs...) = Base._prod(f, x, dims; kwargs...)
+Base.prod(x::Tensor; kwargs...) = Base.prod(identity, x; kwargs...)
+
 # Iteration interface
-Base.IteratorSize(T::Type{Tensor}) = Iterators.IteratorSize(parent_type(T))
-Base.IteratorEltype(T::Type{Tensor}) = Iterators.IteratorEltype(parent_type(T))
+Base.iterate(t::Tensor) = iterate(parent(t))
+Base.iterate(t::Tensor, state) = iterate(parent(t), state)
+
+Base.IteratorSize(T::Type{<:Tensor}) = Iterators.IteratorSize(parent_type(T))
+Base.IteratorEltype(T::Type{<:Tensor}) = Iterators.IteratorEltype(parent_type(T))
 
 Base.isdone(t::Tensor) = Base.isdone(parent(t))
 Base.isdone(t::Tensor, state) = Base.isdone(parent(t), state)
 
 # Indexing interface
 Base.IndexStyle(T::Type{<:Tensor}) = IndexStyle(parent_type(T))
+Base.eachindex(t::Tensor) = eachindex(parent(t))
+Base.eachindex(style::Base.IndexStyle, t::Tensor) = eachindex(style, parent(t))
 
 """
     Base.getindex(::Tensor, i...)
@@ -231,6 +255,7 @@ Base.firstindex(t::Tensor) = firstindex(parent(t))
 Base.lastindex(t::Tensor) = lastindex(parent(t))
 
 # AbstractArray interface
+Base.ndims(t::Tensor) = ndims(parent(t))
 Base.eltype(x::Tensor) = eltype(x.data)
 
 """
@@ -261,16 +286,18 @@ Base.stride(t::Tensor, i::Integer) = stride(parent(t), i)
 Base.unsafe_convert(::Type{Ptr{T}}, t::Tensor{T}) where {T} = Base.unsafe_convert(Ptr{T}, parent(t))
 
 Base.elsize(T::Type{<:Tensor}) = Base.elsize(parent_type(T))
+Base.elsize(t::Tensor) = Base.elsize(parent(t))
 
 # Broadcasting
-Base.BroadcastStyle(::Type{T}) where {T<:Tensor} = ArrayStyle{T}()
+Base.BroadcastStyle(::Type{T}) where {T<:Tensor} = Base.BroadcastStyle(parent_type(T))
+Base.broadcastable(x::Tensor) = parent(x)
+Base.copyto!(dest::Tensor, bc::Broadcasted) = copyto!(parent(dest), bc)
 
-function Base.similar(bc::Broadcasted{ArrayStyle{Tensor{T,N,A}}}, ::Type{ElType}) where {T,N,A,ElType}
-    # NOTE already checked if dimension mismatch
-    # TODO throw on label mismatch?
-    tensor = first(arg for arg in bc.args if arg isa Tensor{T,N,A})
-    return similar(tensor, ElType)
-end
+## called on `tensor[i...] .= value`, requires a `view` such that modification is effective
+Base.dotview(x::Tensor, i...) = view(x, i...)
+
+# other methods
+Base.vec(t::Tensor) = vec(parent(t))
 
 """
     Base.selectdim(tensor::Tensor, dim::Index, i)
@@ -355,14 +382,12 @@ function Base.view(t::Tensor; kw...)
     return view(t, kw...)
 end
 
-# NOTE: `conj` is automatically managed because `Tensor` inherits from `AbstractArray`,
-# but there is a bug when calling `conj` on `Tensor{T,0}` which makes it return a `Tensor{Tensor{Complex, 0}, 0}`
 """
     Base.conj(::Tensor)
 
 Return the conjugate of the tensor.
 """
-Base.conj(x::Tensor{<:Complex,0}) = Tensor(conj(parent(x)), Index[])
+Base.conj(x::Tensor) = Tensor(conj(parent(x)), inds(x))
 
 """
     Base.adjoint(::Tensor)
@@ -513,10 +538,6 @@ function Base._mapreduce_dim(f, op, init::Base._InitialValue, t::Tensor, c::Colo
     Base._mapreduce_dim(f, op, init, parent(t), c)
 end
 
-Base._sum(x::Tensor, ind::Index; kwargs...) = Tensor(Base._sum(parent(x), dim(x, ind); kwargs...), inds(x))
-Base._sum(x::Tensor, c::Colon; kwargs...) = Tensor(fill(Base._sum(parent(x), c; kwargs...)))
-Base._sum(x::Tensor, dims; kwargs...) = Tensor(Base._sum(parent(x), dim.((x,), dims); kwargs...), inds(x))
-
 function isisometry(tensor::Tensor, ind; atol::Real=1e-12)
     # legacy behavior
     if isnothing(ind)
@@ -534,3 +555,12 @@ function isisometry(tensor::Tensor, ind; atol::Real=1e-12)
 
     return isapprox(contracted, LinearAlgebra.I(n); atol)
 end
+
+LinearAlgebra.norm2(x::Tensor) = LinearAlgebra.norm2(parent(x))
+LinearAlgebra.norm1(x::Tensor) = LinearAlgebra.norm1(parent(x))
+LinearAlgebra.normInf(x::Tensor) = LinearAlgebra.normInf(parent(x))
+LinearAlgebra.normMinusInf(x::Tensor) = LinearAlgebra.normMinusInf(parent(x))
+LinearAlgebra.normp(x::Tensor, p::Real) = LinearAlgebra.normp(parent(x), p)
+
+LinearAlgebra.normalize!(x::Tensor, p::Real=2) = (LinearAlgebra.normalize!(parent(x), p); return x)
+LinearAlgebra.normalize(x::Tensor, p::Real=2) = Tensor(LinearAlgebra.normalize(parent(x), p), inds(x))

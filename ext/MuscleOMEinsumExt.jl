@@ -43,7 +43,7 @@ function Muscle.binary_einsum(::Muscle.BackendOMEinsum, inds_c, a, b)
         size_dict[ind] = ind_size
     end
 
-    data_c = OMEinsum.get_output_array((a, b), Int[size_dict[i] for i in inds_c], false)
+    data_c = OMEinsum.get_output_array((parent(a), parent(b)), Int[size_dict[i] for i in inds_c], false)
     OMEinsum.einsum!((inds(a), inds(b)), inds_c, (parent(a), parent(b)), data_c, true, false, size_dict)
     return Tensor(data_c, inds_c)
 end
