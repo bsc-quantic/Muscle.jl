@@ -79,7 +79,7 @@ function Muscle.unary_einsum(
 end
 
 Base.@nospecializeinfer @noinline function Muscle.binary_einsum(
-    ::BackendReactant, inds_c, @nospecialize(a::Tensor{TracedRNumber{Ta}}), @nospecialize(b::Tensor{TracedRNumber{Tb}})
+    ::BackendReactant, inds_c, @nospecialize(a::Tensor{TracedRNumber{Ta}}), @nospecialize(b::Tensor{TracedRNumber{Tb}}); kwargs...
 ) where {Ta,Tb}
     out = inds_c
     dims = setdiff(inds(a) ∩ inds(b), out)

@@ -37,7 +37,7 @@ function Muscle.unary_einsum!(::BackendOMEinsum, y, x)
     return y
 end
 
-function Muscle.binary_einsum(::Muscle.BackendOMEinsum, inds_c, a, b)
+function Muscle.binary_einsum(::Muscle.BackendOMEinsum, inds_c, a, b; kwargs...)
     size_dict = Dict{Index,Int}()
     for (ind, ind_size) in Iterators.flatten([inds(a) .=> size(a), inds(b) .=> size(b)])
         size_dict[ind] = ind_size

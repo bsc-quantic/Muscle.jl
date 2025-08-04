@@ -31,14 +31,17 @@ choose_backend_rule(::typeof(binary_einsum!), ::DomainCUDA, ::DomainCUDA, ::Doma
 choose_backend_rule(::typeof(binary_einsum!), ::DomainReactant, ::DomainReactant, ::DomainReactant) = BackendReactant()
 
 function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=nothing)
+
+    reorder_inds = false
     inds_sum = ∩(dims, inds(a), inds(b))
 
     inds_c = if isnothing(out)
         setdiff(inds(a) ∪ inds(b), inds_sum isa Base.AbstractVecOrTuple ? inds_sum : [inds_sum])
     else
+        reorder_inds = true
         out
     end
-
+ 
     backend = choose_backend(binary_einsum, parent(a), parent(b))
     # if ismissing(backend)
     #     @warn "No backend found for binary_einsum(::$(typeof(a)), ::$(typeof(b))), so unwrapping data"
@@ -47,10 +50,12 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
     #     backend = choose_backend(binary_einsum, data_a, data_b)
     # end
 
-    return binary_einsum(backend, inds_c, a, b)
+    return binary_einsum(backend, inds_c, a, b; reorder_inds)
+       
+
 end
 
-function binary_einsum(::Backend, inds_c, a, b)
+function binary_einsum(::Backend, inds_c, a, b; kwargs...)
     throw(ArgumentError("`binary_einsum` not implemented or not loaded for backend $(typeof(a))"))
 end
 
@@ -73,7 +78,7 @@ function binary_einsum!(::Backend, c, a, b)
     throw(ArgumentError("`binary_einsum!` not implemented or not loaded for backend $(typeof(a))"))
 end
 
-function binary_einsum(::BackendBase, inds_c, a::Tensor, b::Tensor)
+function binary_einsum(::BackendBase, inds_c, a::Tensor, b::Tensor; reorder_inds=true)
     inds_contract = inds(a) ∩ inds(b)
     inds_left = setdiff(inds(a), inds_contract)
     inds_right = setdiff(inds(b), inds_contract)
@@ -92,7 +97,10 @@ function binary_einsum(::BackendBase, inds_c, a::Tensor, b::Tensor)
     c_mat = a_mat * b_mat
 
     c = Tensor(reshape(c_mat, sizes_left..., sizes_right...), [inds_left; inds_right])
-    return permutedims(c, inds_c)
+    if reorder_inds
+        c = permutedims(c, inds_c)
+    end
+    return c
 end
 
 function binary_einsum!(::BackendBase, c::Tensor, a::Tensor, b::Tensor)
