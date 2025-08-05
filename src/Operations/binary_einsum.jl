@@ -35,12 +35,11 @@ function binary_einsum(a::Tensor, b::Tensor; dims=(∩(inds(a), inds(b))), out=n
     reorder_inds = false
     inds_sum = ∩(dims, inds(a), inds(b))
 
-    if isempty(inds_sum) && !isempty(dims) # try matching by hand
-        @assert length(dims) == 2 # just match pairs for now 
-        b = replace(b, dims[2] => dims[1])
-        inds_sum = dims[1]
-    end
-
+    # if isempty(inds_sum) && !isempty(dims) # try matching by hand
+    #     @assert length(dims) == 2 # just match pairs for now 
+    #     b = replace(b, dims[2] => dims[1])
+    #     inds_sum = dims[1]
+    # end
 
     inds_c = if isnothing(out)
         setdiff(inds(a) ∪ inds(b), inds_sum isa Base.AbstractVecOrTuple ? inds_sum : [inds_sum])
