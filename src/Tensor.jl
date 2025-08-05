@@ -1,5 +1,4 @@
 using Base: @propagate_inbounds
-import Base: *
 using Base.Broadcast: Broadcasted, ArrayStyle
 using LinearAlgebra
 using Adapt
@@ -535,18 +534,3 @@ function isisometry(tensor::Tensor, ind; atol::Real=1e-12)
 
     return isapprox(contracted, LinearAlgebra.I(n); atol)
 end
-
-function Base.show(io::IO, ::MIME"text/plain", t::Tensor{T}) where T
-    println(io, "Rank $(ndims(t)) Tensor{$T}, first element = $(first(t)) ")
-    println(io, " size  | Index")
-    for i in inds(t)
-        println(io, "$(lpad(string(size(t, i)),6)) | $(i.tag)")
-    end
-    if length(t) < 100
-        # For small tensors we can afford to call the default show
-        invoke(Base.show, Tuple{IO, Any}, io, t)
-    end
-end
-
-# Overload * for two MyType instances
-*(a::Tensor, b::Tensor) = binary_einsum(a,b)
