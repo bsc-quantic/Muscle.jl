@@ -23,8 +23,12 @@ end
 
 # Prettier(?) printing for Tensors 
 function Base.show(io::IO, ::MIME"text/plain", t::Tensor{T}) where T
+    if ndims(t) == 0
+        println(io, " $(only(t))  - rank 0 Tensor{$T}")
+    else
     println(io, "$(ndims(t)) Inds = ", [":$(i.tag)($(size(t, i)))" for i in inds(t)])
     println(io, "Tensor{$T}, first element = $(first(t)) ")
+    end
     # println(io, " size  | Index")
     # for i in inds(t)
     #     println(io, "$(lpad(string(size(t, i)),6)) | $(i.tag)")
@@ -93,7 +97,7 @@ function contract(a::Tensor, b::Tensor, contract_inds_a=nothing, contract_inds_b
     primed = setdiff(inds(b), contract_inds_a)
 
 
-    @show tags(b)
+    #@show tags(b)
 
     c = binary_einsum(a, b)
 
