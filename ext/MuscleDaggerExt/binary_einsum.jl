@@ -2,7 +2,7 @@ using Muscle
 using Dagger: Dagger, ArrayOp, Context, ArrayDomain, EagerThunk, DArray
 using LinearAlgebra
 
-function Muscle.binary_einsum(::Muscle.BackendDagger, inds_c, a, b)
+function Muscle.binary_einsum(::Muscle.BackendDagger, inds_c, a, b; kwargs...)
     op = BinaryEinsum(inds_c, a, b)
     darray = Dagger._to_darray(op)
     return Tensor(darray, inds_c)

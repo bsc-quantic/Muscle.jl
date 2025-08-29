@@ -13,6 +13,8 @@ export Tensor, isisometry
 include("Domain.jl")
 include("Backend.jl")
 
+include("QOL.jl")
+
 include("Operations/hadamard.jl")
 export hadamard, hadamard!
 

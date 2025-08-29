@@ -24,7 +24,7 @@ function Muscle.choose_backend_rule(
     BackendStrided()
 end
 
-function Muscle.binary_einsum(::BackendStrided, inds_c, a::Tensor, b::Tensor)
+function Muscle.binary_einsum(::BackendStrided, inds_c, a::Tensor, b::Tensor; kwargs...)
     binary_einsum(
         BackendStrided(),
         inds_c,
@@ -34,7 +34,7 @@ function Muscle.binary_einsum(::BackendStrided, inds_c, a::Tensor, b::Tensor)
 end
 
 function Muscle.binary_einsum(
-    ::BackendStrided, inds_c, a::Tensor{Ta,Na,<:StridedView}, b::Tensor{Tb,Nb,<:StridedView}
+    ::BackendStrided, inds_c, a::Tensor{Ta,Na,<:StridedView}, b::Tensor{Tb,Nb,<:StridedView}; kwargs...
 ) where {Ta,Tb,Na,Nb}
     inds_contract = inds(a) ∩ inds(b)
     inds_left = setdiff(inds(a), inds_contract)
