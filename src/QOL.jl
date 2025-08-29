@@ -1,10 +1,9 @@
 import Base: *
 
+*(a::Tensor, b::Tensor) = binary_einsum(a,b)
+
 
 tags(t::Tensor) = [i.tag for i in inds(t)]
-
-
-*(a::Tensor, b::Tensor) = binary_einsum(a,b)
 
 function is_iterable(x)
     try
@@ -45,6 +44,8 @@ function makeinds(n::Int)
     Index.([Symbol(Char(c)) for c in 'i':'z'])[1:n]
 end
 
+
+#sorry
 function prime(i::Index; prime_tag::String="*")
     new_tag = string(i.tag)*prime_tag
     Index(new_tag)
@@ -68,9 +69,6 @@ function unprime(i::Index; prime_tag::String="*")
     new_tag = string(i.tag)[1:end-length(prime_tag)]  # avoid chop() and substrings
     i = Index(new_tag)
 end
-
-
-
 function unprime(t::Tensor; kwargs...)
     t = replace(t, Pair.(inds(t), unprime.(inds(t); kwargs...))...)
 end
@@ -95,7 +93,6 @@ function contract(a::Tensor, b::Tensor, contract_inds_a=nothing, contract_inds_b
     b = replace(prime(b), Pair.(prime.(contract_inds_b), contract_inds_a)...)
 
     primed = setdiff(inds(b), contract_inds_a)
-
 
     #@show tags(b)
 
